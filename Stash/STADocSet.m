@@ -38,6 +38,9 @@
         NSData *infoPlistData = [NSData dataWithContentsOfURL:[contentsDirectory URLByAppendingPathComponent:@"Info.plist"]];
         NSPropertyListFormat format;
         NSError *err = nil;
+        if (!infoPlistData)
+            return nil;
+
         NSDictionary *infoPlistContents = [NSPropertyListSerialization propertyListWithData:infoPlistData options:NSPropertyListImmutable format:&format error:&err];
         [self setName:[infoPlistContents objectForKey:@"CFBundleName"]];
         [self setVersion:[infoPlistContents objectForKey:@"CFBundleVersion"]];

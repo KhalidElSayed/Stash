@@ -316,9 +316,9 @@
                                                  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), cont);
                                              }
                                          }];
-                    [[self docsetStore] docSetDidBeginIndexing:docset];
                     if (nil != docset)
                     {
+                        [[self docsetStore] docSetDidBeginIndexing:docset];
                         [[self preferencesController] registerDocset:docset];
                         if (![[[self preferencesController] enabledDocsets] containsObject:docset])
                         {
