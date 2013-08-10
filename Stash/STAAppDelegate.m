@@ -275,7 +275,6 @@
 - (void)indexDocsetsWithPermissionInRoots:(NSArray *)roots withContinuation:(void(^)(void))cont
 {
     NSError *err;
-    BOOL isDir;
     __block BOOL finishedSearchingForDocsets = NO;
     dispatch_async(dispatch_get_main_queue(), ^()
                    {
@@ -291,8 +290,11 @@
                                                                                   options:0
                                                                                     error:&err])
         {
-            BOOL docsetExists = [[NSFileManager defaultManager] fileExistsAtPath:[docsetURL path] isDirectory:&isDir];
-            if (docsetExists && isDir)
+            NSNumber *isDir = nil;
+            NSString *type = nil;
+            [docsetURL getResourceValue:&isDir forKey:NSURLIsDirectoryKey error:NULL];
+            [docsetURL getResourceValue:&type forKey:NSURLTypeIdentifierKey error:NULL];
+            if ([isDir boolValue] && [type isEqualToString:@"com.apple.xcode.docset"])
             {
                 NSString *docsetCachePath = [[[self pathForArchive] stringByAppendingPathComponent:[docsetURL lastPathComponent]] stringByAppendingPathExtension:@"stashidx"];
                 
