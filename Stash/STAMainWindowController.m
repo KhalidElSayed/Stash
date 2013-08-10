@@ -331,6 +331,10 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
     [[self titleView] setStringValue:title];
 }
 
+- (void)webView:(WebView *)sender didFinishLoadForFrame:(WebFrame *)frame {
+    [sender stringByEvaluatingJavaScriptFromString:@"(function(){ var button = document.getElementById('xcode_leave_feedback'); if(button){ button.setAttribute('class', 'hidden'); }})();"];
+}
+
 - (BOOL)control:(NSControl *)control textShouldBeginEditing:(NSText *)fieldEditor
 {
     if ([control isKindOfClass:[NSSearchField class]])
