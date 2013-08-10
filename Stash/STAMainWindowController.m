@@ -41,9 +41,17 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
     [[self resultWebView] setFrame:resultWebViewFrame];
     
     [[[self resultWebView] preferences] setJavaEnabled:NO];
-    [[[self resultWebView] preferences] setJavaScriptEnabled:NO];
+    [[[self resultWebView] preferences] setJavaScriptEnabled:YES];
     [[[self resultWebView] preferences] setJavaScriptCanOpenWindowsAutomatically:NO];
     [[[self resultWebView] preferences] setPlugInsEnabled:NO];
+
+    // Apple's docsets look for "Xcode/version" in the user-agent and hide
+    // certain elements such as the ADC header.
+    NSDictionary *bundleInfo = [[NSBundle mainBundle] infoDictionary];
+    NSString *userAgent = [NSString stringWithFormat:@"%@/%@ (like Xcode/4)",
+                           bundleInfo[@"CFBundleName"],
+                           bundleInfo[@"CFBundleShortVersionString"]];
+    [[self resultWebView] setApplicationNameForUserAgent:userAgent];
     
     [[self searchField] setEnabled:NO];
     [[self titleView] setStringValue:@"Stash is Loading, Please Wait..."];
