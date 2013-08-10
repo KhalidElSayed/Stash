@@ -286,7 +286,7 @@
     for (NSURL *root in roots)
     {
         for (NSURL *docsetURL in [[NSFileManager defaultManager] contentsOfDirectoryAtURL:root
-                                                               includingPropertiesForKeys:[NSArray array]
+                                                               includingPropertiesForKeys:@[NSURLTypeIdentifierKey, NSURLIsDirectoryKey]
                                                                                   options:0
                                                                                     error:&err])
         {
