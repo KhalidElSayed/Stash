@@ -19,10 +19,28 @@
 
 @implementation STAAppDelegate
 
+- (id)init
+{
+    self = [super init];
+
+    if (nil != self)
+    {
+        [self setPreferencesController:[[STAPreferencesController alloc] initWithNibNamed:@"STAPreferencesController" bundle:nil]];
+        [[self preferencesController] setDelegate:self];
+
+        STAIconShowingMode mode = [[self preferencesController] iconMode];
+
+        if (mode == STAIconShowingModeBoth || mode == STAIconShowingModeDock)
+        {
+            [[NSApplication sharedApplication] setActivationPolicy:NSApplicationActivationPolicyRegular];
+        }
+    }
+
+    return self;
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
-    [self setPreferencesController:[[STAPreferencesController alloc] initWithNibNamed:@"STAPreferencesController" bundle:nil]];
-    [[self preferencesController] setDelegate:self];
     [[self mainWindowController] setPreferencesController:[self preferencesController]];
     [[self mainWindowController] windowDidLoad];
     
@@ -34,10 +52,6 @@
         [[self statusItem] setMenu:[self statusMenu]];
         [[self statusItem] setTitle:@"Stash"];
         [[self statusItem] setHighlightMode:YES];
-    }
-    if (mode == STAIconShowingModeBoth || mode == STAIconShowingModeDock)
-    {
-        [[NSApplication sharedApplication] setActivationPolicy:NSApplicationActivationPolicyRegular];
     }
 
     if (![[self preferencesController] appShouldHideWhenNotActive])
