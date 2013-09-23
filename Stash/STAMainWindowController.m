@@ -16,7 +16,6 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
 @interface STAMainWindowController () <NSTableViewDelegate, NSTableViewDataSource>
 
 @property (copy) NSString *currentSearchString;
-@property (strong) NSMutableArray *results;
 @property (strong) NSArray *sortedResults;
 @property (assign, getter=isFindUIShowing) BOOL findUIShowing;
 @property (weak) NSSearchField *selectedSearchField;
@@ -185,48 +184,36 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
     NSString *searchString = [[[self searchField] stringValue] lowercaseString];
     [self hideSearchBar:self];
     [self setCurrentSearchString:searchString];
-    [self setResults:[NSMutableArray array]];
-    [self setSortedResults:[NSMutableArray array]];
-    [[self resultsTable] reloadData];
-    for (STADocSet *docSet in [[self preferencesController] enabledDocsets])
-    {
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^()
-                       {
-                           [self searchDocSet:docSet forString:searchString];
-                       });
-    }
-}
 
-- (void)searchDocSet:(STADocSet *)docSet forString:(NSString *)searchString
-{
-    @autoreleasepool
-    {
-        [docSet search:searchString
-                method:[[self searchMethodSelector] selectedRow] == 0 ? STASearchMethodPrefix : STASearchMethodContains
-              onResult:^(STASymbol *symbol)
-         {
-             [self setResultNeedsDisplay:symbol forSearchString:searchString];
-         }];
-        dispatch_sync(dispatch_get_main_queue(), ^()
-                      {
-                          [self setSortedResults:[[self results] sortedArrayUsingSelector:@selector(compare:)]];
-                          [[self resultsTable] reloadData];
-                          if ([self.sortedResults count] > 0) {
-                              [self.resultsTable selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
-                          }
-                      });
-    }
-}
+    __block OSSpinLock lock = OS_SPINLOCK_INIT;
+    NSMutableArray *results = [NSMutableArray array];
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
 
-- (void)setResultNeedsDisplay:(STASymbol *)symbol forSearchString:(NSString *)searchString
-{
-    dispatch_sync(dispatch_get_main_queue(), ^()
-                  {
-                      if ([searchString isEqualToString:[self currentSearchString]])
-                      {
-                          [[self results] addObject:symbol];
-                      }
-                  });
+    for (STADocSet *docSet in [[self preferencesController] enabledDocsets]) {
+        dispatch_group_async(group, queue, ^{
+            [docSet search:searchString
+                    method:[[self searchMethodSelector] selectedRow] == 0 ? STASearchMethodPrefix : STASearchMethodContains
+                  onResult:^(STASymbol *symbol) {
+                      OSSpinLockLock(&lock);
+                      [results addObject:symbol];
+                      OSSpinLockUnlock(&lock);
+             }];
+        });
+    }
+
+    dispatch_group_notify(group, queue, ^{
+        [results sortUsingSelector:@selector(compare:)];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if ([searchString isEqualToString:[self currentSearchString]]) {
+                [self setSortedResults:results];
+                [[self resultsTable] reloadData];
+                if ([self.sortedResults count] > 0) {
+                    [self.resultsTable selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
+                }
+            }
+        });
+    });
 }
 
 - (IBAction)setSearchMethod:(id)sender
