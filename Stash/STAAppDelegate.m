@@ -434,7 +434,7 @@
     }
 }
 
-- (void)windowDidResignKey:(NSNotification *)notification
+- (void)applicationDidResignActive:(NSNotification *)notification
 {
     if ([[self preferencesController] appShouldHideWhenNotActive])
     {
