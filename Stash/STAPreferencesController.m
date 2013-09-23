@@ -16,9 +16,7 @@
 #define kShowsIconWhereKey @"Shows Icon Where"
 #define kEnabledDocsetsKey @"Enabled Docsets"
 
-NSString *descriptionStringFromChar(unichar c);
-
-NSString *descriptionStringFromChar(unichar c)
+static NSString *descriptionStringFromChar(unichar c)
 {
     switch (c)
     {
