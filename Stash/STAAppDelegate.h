@@ -22,6 +22,5 @@
 
 - (IBAction)toggleStashWindow:(id)sender;
 - (IBAction)openPreferences:(id)sender;
-- (IBAction)quit:(id)sender;
 
 @end

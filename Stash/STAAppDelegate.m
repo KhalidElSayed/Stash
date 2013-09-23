@@ -464,11 +464,6 @@
     [[self preferencesController] showWindow];
 }
 
-- (IBAction)quit:(id)sender
-{
-    [NSApp terminate:sender];
-}
-
 #pragma mark - Prefs Delegate
 - (void)preferencesControllerDidUpdateSelectedDocsets:(STAPreferencesController *)prefsController
 {

@@ -1015,7 +1015,7 @@ This may be because you do not have Xcode installed, or because you did not sele
                 <menuItem title="Quit" id="1034">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
-                        <action selector="quit:" target="494" id="1036"/>
+                        <action selector="terminate:" target="-3" id="LRa-AA-hMP"/>
                     </connections>
                 </menuItem>
             </items>
