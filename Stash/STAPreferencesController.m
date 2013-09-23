@@ -12,9 +12,10 @@
 
 #define kModifierFlagsKey @"Modifier Flags"
 #define kKeyboardShortcutKey @"Keyboard Shortcut"
-#define kHidesWhenNotActiveKey @"Hides When Not Active"
-#define kShowsIconWhereKey @"Shows Icon Where"
 #define kEnabledDocsetsKey @"Enabled Docsets"
+
+static NSString * const STAShowDockIconKey = @"ShowDockIcon";
+static NSString * const STAShowMenuBarIconKey = @"ShowMenuBarIcon";
 
 static NSString *descriptionStringFromChar(unichar c)
 {
@@ -62,7 +63,11 @@ static NSString *descriptionStringFromChar(unichar c)
 
 @end
 
-@implementation STAPreferencesController
+@implementation STAPreferencesController {
+    NSUserDefaults *_defaults;
+    IBOutlet __weak NSButton *_showDockIconButton;
+    IBOutlet __weak NSButton *_showMenuBarIconButton;
+}
 
 - (id)initWithNibNamed:(NSString *)nibName bundle:(NSBundle *)bundle
 {
@@ -76,6 +81,7 @@ static NSString *descriptionStringFromChar(unichar c)
         {
             return nil;
         }
+        _defaults = [NSUserDefaults standardUserDefaults];
         [self setEventMonitor:nil];
         [self setInternalRegisteredDocsets:[NSMutableArray array]];
         [[NSUserDefaults standardUserDefaults] registerDefaults:[self defaultPreferences]];
@@ -87,10 +93,11 @@ static NSString *descriptionStringFromChar(unichar c)
 - (void)showWindow
 {
     [self setupShortcutText];
-    
-    [[self hideWhenNotActiveCheckbox] setState:[[NSUserDefaults standardUserDefaults] boolForKey:kHidesWhenNotActiveKey]];
-    [[self showIconMenuButton] selectItemAtIndex:[[NSUserDefaults standardUserDefaults] integerForKey:kShowsIconWhereKey]];
-    
+
+    [_showDockIconButton setState:[_defaults boolForKey:STAShowDockIconKey] ? NSOnState : NSOffState];
+    [_showMenuBarIconButton setState:[_defaults boolForKey:STAShowMenuBarIconKey] ? NSOnState : NSOffState];
+
+    [[self window] center];
     [[self window] makeKeyAndOrderFront:self];
     [NSApp activateIgnoringOtherApps:YES];
 }
@@ -135,9 +142,8 @@ static NSString *descriptionStringFromChar(unichar c)
     return [NSDictionary dictionaryWithObjectsAndKeys:
             [NSNumber numberWithUnsignedInteger:NSCommandKeyMask | NSControlKeyMask], kModifierFlagsKey,
             [NSNumber numberWithInt:' '], kKeyboardShortcutKey,
-            [NSNumber numberWithBool:YES], kHidesWhenNotActiveKey,
-            [NSNumber numberWithInt:STAIconShowingModeMenuBar], kShowsIconWhereKey,
             registeredDocsetNames, kEnabledDocsetsKey,
+            @YES, STAShowDockIconKey,
             nil];
 }
 
@@ -165,51 +171,12 @@ static NSString *descriptionStringFromChar(unichar c)
                            }]];
 }
 
-- (IBAction)showIconChanged:(id)sender
-{
-    NSInteger selection = [[self showIconMenuButton] indexOfSelectedItem];
-    NSInteger oldSelection = [[NSUserDefaults standardUserDefaults] integerForKey:kShowsIconWhereKey];
-    [[NSUserDefaults standardUserDefaults] setInteger:selection
-                                               forKey:kShowsIconWhereKey];
-    [[NSUserDefaults standardUserDefaults] synchronize];
-    
-    if (selection == STAIconShowingModeBoth || selection == STAIconShowingModeDock)
-    {
-        [[NSApplication sharedApplication] setActivationPolicy:NSApplicationActivationPolicyRegular];
-    }
-    else
-    {
-        [[NSApplication sharedApplication] setActivationPolicy:NSApplicationActivationPolicyAccessory];
-        if (oldSelection != selection)
-        {
-            NSAlert *alert = [NSAlert alertWithMessageText:@"Restart Required"
-                                             defaultButton:@"Okay"
-                                           alternateButton:nil
-                                               otherButton:nil
-                                 informativeTextWithFormat:@"In order to remove Stash from the dock, you must restart it."];
-            [alert runModal];
-        }
-    }
-    
-    STAAppDelegate *del = (STAAppDelegate *)[[NSApplication sharedApplication] delegate];
-    if (selection == STAIconShowingModeMenuBar || selection == STAIconShowingModeBoth)
-    {
-        [del setStatusItem:[[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength]];
-        [[del statusItem] setMenu:[del statusMenu]];
-        [[del statusItem] setTitle:@"Stash"];
-        [[del statusItem] setHighlightMode:YES];
-    }
-    else
-    {
-        [del setStatusItem:nil];
-    }
+- (IBAction)showDockIconChanged:(id)sender {
+    [_defaults setBool:([_showDockIconButton state] == NSOnState) forKey:STAShowDockIconKey];
 }
 
-- (IBAction)hideWhenNotActiveChanged:(id)sender
-{
-    [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:[[self hideWhenNotActiveCheckbox] state] == NSOnState]
-                                              forKey:kHidesWhenNotActiveKey];
-    [[NSUserDefaults standardUserDefaults] synchronize];
+- (IBAction)showMenuBarIconChanged:(id)sender {
+    [_defaults setBool:([_showMenuBarIconButton state] == NSOnState) forKey:STAShowMenuBarIconKey];
 }
 
 - (void)removeEventMonitor
@@ -223,14 +190,16 @@ static NSString *descriptionStringFromChar(unichar c)
     return [self eventMonitor] != nil;
 }
 
-- (BOOL)appShouldHideWhenNotActive
-{
-    return [[NSUserDefaults standardUserDefaults] boolForKey:kHidesWhenNotActiveKey];
+- (BOOL)appShouldHideWhenNotActive {
+    return !self.shouldShowDockIcon;
 }
 
-- (STAIconShowingMode)iconMode
-{
-    return (STAIconShowingMode)[[NSUserDefaults standardUserDefaults] integerForKey:kShowsIconWhereKey];
+- (BOOL)shouldShowDockIcon {
+    return [_defaults boolForKey:STAShowDockIconKey];
+}
+
+- (BOOL)shouldShowMenuBarIcon {
+    return [_defaults boolForKey:STAShowMenuBarIconKey];
 }
 
 - (NSArray *)registeredDocsets

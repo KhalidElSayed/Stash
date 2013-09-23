@@ -28,9 +28,7 @@
         [self setPreferencesController:[[STAPreferencesController alloc] initWithNibNamed:@"STAPreferencesController" bundle:nil]];
         [[self preferencesController] setDelegate:self];
 
-        STAIconShowingMode mode = [[self preferencesController] iconMode];
-
-        if (mode == STAIconShowingModeBoth || mode == STAIconShowingModeDock)
+        if (self.preferencesController.shouldShowDockIcon)
         {
             [[NSApplication sharedApplication] setActivationPolicy:NSApplicationActivationPolicyRegular];
         }
@@ -43,16 +41,13 @@
 {
     [[self mainWindowController] setPreferencesController:[self preferencesController]];
     [[self mainWindowController] windowDidLoad];
-    
-    STAIconShowingMode mode = [[self preferencesController] iconMode];
-    
-    if (mode == STAIconShowingModeBoth || mode == STAIconShowingModeMenuBar)
-    {
-        [self setStatusItem:[[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength]];
-        [[self statusItem] setMenu:[self statusMenu]];
-        [[self statusItem] setTitle:@"Stash"];
-        [[self statusItem] setHighlightMode:YES];
-    }
+
+    [self userDefaultsDidChange:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(userDefaultsDidChange:)
+                                                 name:NSUserDefaultsDidChangeNotification
+                                               object:nil];
 
     if (![[self preferencesController] appShouldHideWhenNotActive])
     {
@@ -99,6 +94,28 @@
     }
 
     return YES;
+}
+
+- (void)userDefaultsDidChange:(NSNotification *)notification {
+    if (self.preferencesController.shouldShowDockIcon) {
+        if ([NSApp activationPolicy] != NSApplicationActivationPolicyRegular) {
+            [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+        }
+    }
+
+    if (self.preferencesController.shouldShowMenuBarIcon) {
+        if (!_statusItem) {
+            _statusItem = [[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];
+            [_statusItem setMenu:[self statusMenu]];
+            [_statusItem setTitle:@"Stash"];
+            [_statusItem setHighlightMode:YES];
+        }
+    } else {
+        if (_statusItem) {
+            [[NSStatusBar systemStatusBar] removeStatusItem:_statusItem];
+            _statusItem = nil;
+        }
+    }
 }
 
 #define STADocumentationBookmarksKey @"DocsBookmarks"

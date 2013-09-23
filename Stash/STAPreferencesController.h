@@ -38,10 +38,10 @@ typedef enum
 @property (strong) IBOutlet NSTextField *shortcutText;
 @property (strong) IBOutlet NSTableView *docsetTable;
 @property (readonly) BOOL isMonitoringForEvents;
-@property (weak) IBOutlet NSButton *hideWhenNotActiveCheckbox;
 @property (weak) IBOutlet NSPopUpButton *showIconMenuButton;
 @property (readonly) BOOL appShouldHideWhenNotActive;
-@property (readonly) STAIconShowingMode iconMode;
+@property (readonly) BOOL shouldShowDockIcon;
+@property (readonly) BOOL shouldShowMenuBarIcon;
 
 - (id)initWithNibNamed:(NSString *)nibName bundle:(NSBundle *)bundle;
 
@@ -50,7 +50,5 @@ typedef enum
 - (void)registerDocset:(STADocSet *)docset;
 
 - (IBAction)changeShortcut:(id)sender;
-- (IBAction)showIconChanged:(id)sender;
-- (IBAction)hideWhenNotActiveChanged:(id)sender;
 
 @end
