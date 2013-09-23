@@ -10,35 +10,33 @@
 
 typedef enum : unsigned char
 {
-    STALanguageC,
-    STALanguageCPlusPlus,
-    STALanguageObjectiveC,
-    STALanguageJavascript,
-    
-    STALanguageUnknown
+    STALanguageUnknown    = 0,
+    STALanguageC          = 1,
+    STALanguageCPlusPlus  = 2,
+    STALanguageObjectiveC = 3,
+    STALanguageJavascript = 4
 } STALanguage;
 
 typedef enum : unsigned char
 {
-    STASymbolTypeFunction,
-    STASymbolTypeMacro,
-    STASymbolTypeTypeDefinition,
-    STASymbolTypeClass,
-    STASymbolTypeInterface,
-    STASymbolTypeCategory,
-    STASymbolTypeClassMethod,
-    STASymbolTypeClassConstant,
-    STASymbolTypeInstanceMethod,
-    STASymbolTypeInstanceProperty,
-    STASymbolTypeInterfaceMethod,
-    STASymbolTypeInterfaceClassMethod,
-    STASymbolTypeInterfaceProperty,
-    STASymbolTypeEnumerationConstant,
-    STASymbolTypeData,
-    STASymbolTypeTag,
-    STASymbolTypeBinding,
-    
-    STASymbolTypeUnknown
+    STASymbolTypeUnknown              = 0,
+    STASymbolTypeFunction             = 1,
+    STASymbolTypeMacro                = 2,
+    STASymbolTypeTypeDefinition       = 3,
+    STASymbolTypeClass                = 4,
+    STASymbolTypeInterface            = 5,
+    STASymbolTypeCategory             = 6,
+    STASymbolTypeClassMethod          = 7,
+    STASymbolTypeClassConstant        = 8,
+    STASymbolTypeInstanceMethod       = 9,
+    STASymbolTypeInstanceProperty     = 10,
+    STASymbolTypeInterfaceMethod      = 11,
+    STASymbolTypeInterfaceClassMethod = 12,
+    STASymbolTypeInterfaceProperty    = 13,
+    STASymbolTypeEnumerationConstant  = 14,
+    STASymbolTypeData                 = 15,
+    STASymbolTypeTag                  = 16,
+    STASymbolTypeBinding              = 17
 } STASymbolType;
 
 typedef enum

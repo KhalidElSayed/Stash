@@ -12,10 +12,9 @@
 
 typedef enum
 {
-    STAPlatformMacOS,
-    STAPlatformIOS,
-    
-    STAPlatformUnknown
+    STAPlatformUnknown = 0,
+    STAPlatformMacOS   = 1,
+    STAPlatformIOS     = 2,
 } STAPlatform;
 
 @interface STADocSet : NSObject <NSCoding>
