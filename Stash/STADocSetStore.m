@@ -56,11 +56,6 @@
     return self;
 }
 
-- (void)dealloc
-{
-    dispatch_release(_docsetArrayEditingQueue);
-}
-
 - (NSArray *)allDocsets
 {
     return [_docsets arrayByAddingObjectsFromArray:_indexingDocsets];

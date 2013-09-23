@@ -73,7 +73,7 @@ NSString *descriptionStringFromChar(unichar c)
     if (nil != self)
     {
         NSArray *topLevelObjects = nil;
-        BOOL success = [[[NSNib alloc] initWithNibNamed:nibName bundle:bundle] instantiateNibWithOwner:self topLevelObjects:&topLevelObjects];
+        BOOL success = [[[NSNib alloc] initWithNibNamed:nibName bundle:bundle] instantiateWithOwner:self topLevelObjects:&topLevelObjects];
         if (!success)
         {
             return nil;
