@@ -10,14 +10,6 @@
 
 #import "STADocSet.h"
 
-typedef enum
-{
-    STAIconShowingModeMenuBar = 0,
-    STAIconShowingModeDock    = 1,
-    STAIconShowingModeBoth    = 2
-} STAIconShowingMode;
-
-
 @class STAPreferencesController;
 
 @protocol STAPreferencesDelegate <NSObject>
