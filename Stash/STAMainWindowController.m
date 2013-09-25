@@ -263,8 +263,9 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
     {
         NSArray *allDocsets = [[[self docsetStore] allDocsets] sortedArrayUsingComparator:^ NSComparisonResult (STADocSet *d1, STADocSet *d2)
                                {
-                                   return [[d1 name] compare:[d2 name]];
+                                   return [[d1 name] localizedStandardCompare:[d2 name]];
                                }];
+
         if ([[tableColumn identifier] isEqualToString:@"docset"])
         {
             NSTextField *textField = [[NSTextField alloc] initWithFrame:NSZeroRect];
