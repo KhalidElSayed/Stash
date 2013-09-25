@@ -8,14 +8,11 @@
 
 #import "STAPreferencesController.h"
 
-#import "STAAppDelegate.h"
-
-#define kModifierFlagsKey @"Modifier Flags"
-#define kKeyboardShortcutKey @"Keyboard Shortcut"
-#define kEnabledDocsetsKey @"Enabled Docsets"
-
 static NSString * const STAShowDockIconKey = @"ShowDockIcon";
 static NSString * const STAShowMenuBarIconKey = @"ShowMenuBarIcon";
+static NSString * const STAModifierFlagsKey = @"ModifierFlags";
+static NSString * const STAKeyboardShortcutKey = @"KeyboarShortcut";
+static NSString * const STADisabledDocSetsKey = @"DisabledDocSets";
 
 static NSString *descriptionStringFromChar(unichar c)
 {
@@ -55,16 +52,14 @@ static NSString *descriptionStringFromChar(unichar c)
 
 @interface STAPreferencesController ()
 
-@property (strong) NSMutableArray *internalRegisteredDocsets;
 @property (weak) id eventMonitor;
-
-- (NSDictionary *)defaultPreferences;
-- (NSArray *)registeredDocsets;
 
 @end
 
 @implementation STAPreferencesController {
     NSUserDefaults *_defaults;
+    NSArray *_registeredDocSets;
+    NSMutableSet *_disabledDocSetIdentifiers;
     IBOutlet __weak NSButton *_showDockIconButton;
     IBOutlet __weak NSButton *_showMenuBarIconButton;
 }
@@ -82,9 +77,15 @@ static NSString *descriptionStringFromChar(unichar c)
             return nil;
         }
         _defaults = [NSUserDefaults standardUserDefaults];
-        [self setEventMonitor:nil];
-        [self setInternalRegisteredDocsets:[NSMutableArray array]];
-        [[NSUserDefaults standardUserDefaults] registerDefaults:[self defaultPreferences]];
+        [_defaults registerDefaults:@{
+            STAShowDockIconKey: @YES,
+            STAModifierFlagsKey: @(NSCommandKeyMask | NSControlKeyMask),
+            STAKeyboardShortcutKey: @(' '),
+            STADisabledDocSetsKey: @[]
+        }];
+
+        _registeredDocSets = @[];
+        _disabledDocSetIdentifiers = [NSMutableSet setWithArray:[_defaults arrayForKey:STADisabledDocSetsKey]];
     }
     
     return self;
@@ -130,28 +131,13 @@ static NSString *descriptionStringFromChar(unichar c)
     [[self shortcutText] setStringValue:keyboardShortcutString];
 }
 
-- (NSDictionary *)defaultPreferences
+- (void)registerDocSets:(NSArray *)docSets
 {
-    NSArray *docsets = [self registeredDocsets];
-    NSMutableArray *registeredDocsetNames = [NSMutableArray arrayWithCapacity:[docsets count]];
-    for (STADocSet *docset in docsets)
-    {
-        [registeredDocsetNames addObject:[docset name]];
-    }
-    
-    return [NSDictionary dictionaryWithObjectsAndKeys:
-            [NSNumber numberWithUnsignedInteger:NSCommandKeyMask | NSControlKeyMask], kModifierFlagsKey,
-            [NSNumber numberWithInt:' '], kKeyboardShortcutKey,
-            registeredDocsetNames, kEnabledDocsetsKey,
-            @YES, STAShowDockIconKey,
-            nil];
-}
+    _registeredDocSets = [docSets sortedArrayUsingComparator:^NSComparisonResult(STADocSet *obj1, STADocSet *obj2) {
+        return [obj1.name localizedStandardCompare:obj2.name];
+    }];
 
-- (void)registerDocset:(STADocSet *)docset
-{
-    [[self internalRegisteredDocsets] addObject:docset];
     [[self docsetTable] reloadData];
-    [[NSUserDefaults standardUserDefaults] registerDefaults:[self defaultPreferences]];
 }
 
 - (IBAction)changeShortcut:(id)sender
@@ -160,9 +146,9 @@ static NSString *descriptionStringFromChar(unichar c)
     [self setEventMonitor:[NSEvent addLocalMonitorForEventsMatchingMask:NSKeyUpMask handler:^ NSEvent * (NSEvent *e)
                            {
                                [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithUnsignedInteger:[e modifierFlags] & NSDeviceIndependentModifierFlagsMask]
-                                                                         forKey:kModifierFlagsKey];
+                                                                         forKey:STAModifierFlagsKey];
                                [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithInt:[[e charactersIgnoringModifiers] characterAtIndex:0]]
-                                                                         forKey:kKeyboardShortcutKey];
+                                                                         forKey:STAKeyboardShortcutKey];
                                [self setupShortcutText];
                                [[self shortcutButton] setState:NSOffState];
                                [self performSelector:@selector(removeEventMonitor) withObject:nil afterDelay:0.0];
@@ -202,39 +188,27 @@ static NSString *descriptionStringFromChar(unichar c)
     return [_defaults boolForKey:STAShowMenuBarIconKey];
 }
 
-- (NSArray *)registeredDocsets
-{
-    return [[self internalRegisteredDocsets] copy];
-}
-
 - (NSArray *)enabledDocsets
 {
-    NSArray *enabledDocsetNames = [[NSUserDefaults standardUserDefaults] objectForKey:kEnabledDocsetsKey];
-    NSMutableArray *enabledDocsets = [NSMutableArray arrayWithCapacity:[enabledDocsetNames count]];
-    for (STADocSet *docset in [self registeredDocsets])
-    {
-        if ([enabledDocsetNames containsObject:[docset name]])
-        {
-            [enabledDocsets addObject:docset];
-        }
-    }
-    return [enabledDocsets copy];
+    return [_registeredDocSets objectsAtIndexes:[_registeredDocSets indexesOfObjectsPassingTest:^BOOL(STADocSet *docSet, NSUInteger idx, BOOL *stop) {
+        return ([_disabledDocSetIdentifiers containsObject:docSet.identifier] == NO);
+    }]];
 }
 
 - (unichar)keyboardShortcutCharacter
 {
-    return (unichar) [[[NSUserDefaults standardUserDefaults] objectForKey:kKeyboardShortcutKey] intValue];
+    return (unichar) [[[NSUserDefaults standardUserDefaults] objectForKey:STAKeyboardShortcutKey] intValue];
 }
 
 - (NSUInteger)keyboardShortcutModifierFlags
 {
-    return [[[NSUserDefaults standardUserDefaults] objectForKey:kModifierFlagsKey] unsignedIntegerValue];
+    return [[[NSUserDefaults standardUserDefaults] objectForKey:STAModifierFlagsKey] unsignedIntegerValue];
 }
 
 #pragma mark - Table View Data Source
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView
 {
-    return [[self registeredDocsets] count];
+    return [_registeredDocSets count];
 }
 
 - (id)tableView:(NSTableView *)tableView objectValueForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row
@@ -244,18 +218,15 @@ static NSString *descriptionStringFromChar(unichar c)
         return nil;
     }
 
-    STADocSet *docSet = [[[self registeredDocsets] sortedArrayUsingComparator:^ NSComparisonResult (STADocSet *ds1, STADocSet *ds2)
-    {
-        return [[ds1 name] compare:[ds2 name]];
-    }] objectAtIndex:(NSUInteger) row];
+    STADocSet *docSet = [_registeredDocSets objectAtIndex:(NSUInteger)row];
 
     if ([[tableColumn identifier] isEqualToString:@"name"])
     {
-        return [docSet name];
+        return docSet.name;
     }
     else
     {
-        return [NSNumber numberWithBool:[[self enabledDocsets] containsObject:docSet]];
+        return @([_disabledDocSetIdentifiers containsObject:docSet.identifier] == NO);
     }
 }
 
@@ -266,23 +237,19 @@ static NSString *descriptionStringFromChar(unichar c)
         return;
     }
 
-    STADocSet *docSet = [[[self registeredDocsets] sortedArrayUsingComparator:^NSComparisonResult(STADocSet *ds1, STADocSet *ds2)
-    {
-        return [[ds1 name] compare:[ds2 name]];
-    }] objectAtIndex:(NSUInteger) row];
+    STADocSet *docSet = [_registeredDocSets objectAtIndex:(NSUInteger)row];
 
     if (![[tableColumn identifier] isEqualToString:@"name"])
     {
-        NSMutableArray *enabledDocsetNames = [[[NSUserDefaults standardUserDefaults] objectForKey:kEnabledDocsetsKey] mutableCopy];
-        if ([object boolValue])
+        if (![object boolValue])
         {
-            [enabledDocsetNames addObject:[docSet name]];
+            [_disabledDocSetIdentifiers addObject:docSet.identifier];
         }
         else
         {
-            [enabledDocsetNames removeObject:[docSet name]];
+            [_disabledDocSetIdentifiers removeObject:docSet.identifier];
         }
-        [[NSUserDefaults standardUserDefaults] setObject:enabledDocsetNames forKey:kEnabledDocsetsKey];
+        [[NSUserDefaults standardUserDefaults] setObject:[_disabledDocSetIdentifiers allObjects] forKey:STADisabledDocSetsKey];
         [[self delegate] preferencesControllerDidUpdateSelectedDocsets:self];
     }
 }

@@ -934,22 +934,22 @@
                                         </scroller>
                                     </scrollView>
                                     <customView hidden="YES" id="1480">
-                                        <rect key="frame" x="183" y="210" width="376" height="171"/>
+                                        <rect key="frame" x="183" y="231" width="376" height="150"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                         <subviews>
                                             <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" setsMaxLayoutWidthAtFirstLayout="YES" id="1468">
-                                                <rect key="frame" x="29" y="41" width="330" height="68"/>
+                                                <rect key="frame" x="29" y="20" width="330" height="68"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="center" id="1469">
                                                     <font key="font" metaFont="system"/>
                                                     <string key="title">Stash could not find any documentation.
-This may be because you do not have Xcode installed, or because you did not select the 'DocSets' directory when Stash started.</string>
+This may be because you do not have Xcode installed, or have not downloaded any documentation sets.</string>
                                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
                                             </textField>
                                             <textField verticalHuggingPriority="750" id="1459">
-                                                <rect key="frame" x="17" y="117" width="342" height="34"/>
+                                                <rect key="frame" x="17" y="96" width="342" height="34"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="center" title="No Documentation Found" id="1460">
                                                     <font key="font" size="24" name="LucidaGrande"/>
@@ -957,17 +957,6 @@ This may be because you do not have Xcode installed, or because you did not sele
                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
                                             </textField>
-                                            <button verticalHuggingPriority="750" id="1499">
-                                                <rect key="frame" x="105" y="1" width="166" height="32"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <buttonCell key="cell" type="push" title="Add Documentation" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="1500">
-                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="system"/>
-                                                </buttonCell>
-                                                <connections>
-                                                    <action selector="addDocumentation:" target="494" id="1523"/>
-                                                </connections>
-                                            </button>
                                         </subviews>
                                     </customView>
                                 </subviews>

@@ -39,7 +39,7 @@
 
 - (void)showWindow;
 
-- (void)registerDocset:(STADocSet *)docset;
+- (void)registerDocSets:(NSArray *)docSets;
 
 - (IBAction)changeShortcut:(id)sender;
 
