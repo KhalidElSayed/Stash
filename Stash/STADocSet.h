@@ -17,17 +17,18 @@ typedef enum
     STAPlatformIOS     = 2,
 } STAPlatform;
 
-@interface STADocSet : NSObject <NSCoding>
+@interface STADocSet : NSObject
 
-@property (copy) NSString *name;
-@property (copy) NSStream *version;
-@property (assign) STAPlatform platform;
-@property (copy) NSString *cachePath;
+@property (nonatomic, readonly) NSURL *URL;
+@property (nonatomic, readonly) NSString *identifier;
+@property (nonatomic, readonly) NSString *name;
+@property (nonatomic, readonly) NSString *docSetVersion;
+@property (nonatomic, readonly) STAPlatform platform;
+@property (nonatomic, readonly) NSString *platformVersion;
 
-+ (id)docSetWithURL:(NSURL *)url cachePath:(NSString *)cachePath onceIndexed:(void(^)(STADocSet *))completion;
-- (id)initWithURL:(NSURL *)url cachePath:(NSString *)cachePath onceIndexed:(void(^)(STADocSet *))completion;
++ (instancetype)docSetWithURL:(NSURL *)url;
 
-- (void)search:(NSString *)searchString method:(STASearchMethod)method onResult:(void(^)(STASymbol *))result;
+- (id)propertyListRepresentation;
 
 - (void)unload;
 

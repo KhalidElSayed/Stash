@@ -185,25 +185,8 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
     [self hideSearchBar:self];
     [self setCurrentSearchString:searchString];
 
-    __block OSSpinLock lock = OS_SPINLOCK_INIT;
-    NSMutableArray *results = [NSMutableArray array];
-    dispatch_group_t group = dispatch_group_create();
-    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
-
-    for (STADocSet *docSet in [[self preferencesController] enabledDocsets]) {
-        dispatch_group_async(group, queue, ^{
-            [docSet search:searchString
-                    method:[[self searchMethodSelector] selectedRow] == 0 ? STASearchMethodPrefix : STASearchMethodContains
-                  onResult:^(STASymbol *symbol) {
-                      OSSpinLockLock(&lock);
-                      [results addObject:symbol];
-                      OSSpinLockUnlock(&lock);
-             }];
-        });
-    }
-
-    dispatch_group_notify(group, queue, ^{
-        [results sortUsingSelector:@selector(compare:)];
+    STASearchMethod method = [self.searchMethodSelector selectedRow] == 0 ? STASearchMethodPrefix : STASearchMethodContains;
+    [self.docsetStore searchString:searchString inDocSets:self.preferencesController.enabledDocsets method:method completionHandler:^(NSArray *results) {
         dispatch_async(dispatch_get_main_queue(), ^{
             if ([searchString isEqualToString:[self currentSearchString]]) {
                 [self setSortedResults:results];
@@ -213,7 +196,7 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
                 }
             }
         });
-    });
+    }];
 }
 
 - (IBAction)setSearchMethod:(id)sender

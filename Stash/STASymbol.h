@@ -50,7 +50,7 @@ STASymbolType STASymbolTypeFromNSString(NSString *symbolTypeString);
 
 @class STADocSet;
 
-@interface STASymbol : NSObject <NSCoding>
+@interface STASymbol : NSObject
 
 @property (nonatomic,assign) STALanguage language;
 @property (nonatomic,assign) STASymbolType symbolType;
@@ -61,6 +61,8 @@ STASymbolType STASymbolTypeFromNSString(NSString *symbolTypeString);
 
 - (id)initWithLanguageString:(NSString *)language symbolTypeString:(NSString *)symbolType symbolName:(NSString *)symbolName url:(NSURL *)url docSet:(STADocSet *)docSet;
 - (id)initWithLanguageString:(NSString *)language symbolTypeString:(NSString *)symbolType symbolName:(NSString *)symbolName parentName:(NSString *)parentName url:(NSURL *)url docSet:(STADocSet *)docSet;
+- (instancetype)initWithPropertyListRepresentation:(id)plist docSet:(STADocSet *)docSet;
+- (id)propertyListRepresentation;
 
 - (BOOL)matches:(NSString *)searchString method:(STASearchMethod)method;
 

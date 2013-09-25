@@ -12,6 +12,11 @@
 
 NSUInteger STASymbolTypeOrder(STASymbolType type);
 
+static NSString * const STALanguageKey = @"language";
+static NSString * const STATypeKey = @"type";
+static NSString * const STANameKey = @"name";
+static NSString * const STAURLKey = @"URL";
+
 @implementation STASymbol
 
 - (id)initWithLanguageString:(NSString *)language symbolTypeString:(NSString *)symbolType symbolName:(NSString *)symbolName url:(NSURL *)url docSet:(STADocSet *)docSet
@@ -22,6 +27,9 @@ NSUInteger STASymbolTypeOrder(STASymbolType type);
 - (id)initWithLanguageString:(NSString *)language symbolTypeString:(NSString *)symbolType symbolName:(NSString *)symbolName parentName:(NSString *)parentName url:(NSURL *)url docSet:(STADocSet *)docSet
 {
     self = [super init];
+
+    NSParameterAssert(url != nil);
+    NSParameterAssert(docSet != nil);
     
     if (nil != self)
     {
@@ -36,38 +44,26 @@ NSUInteger STASymbolTypeOrder(STASymbolType type);
     return self;
 }
 
-#define kSymbolLanguageKey   @"S.l"
-#define kSymbolSymbolTypeKey @"S.k"
-#define kSymbolSymbolNameKey @"S.n"
-//#define kSymbolParentNameKey @"S.p"
-#define kSymbolURLKey        @"S.u"
-#define kSymbolDocSetKey     @"S.d"
+- (instancetype)initWithPropertyListRepresentation:(id)plist docSet:(STADocSet *)docSet {
+    if (!(self = [super init]))
+        return nil;
 
-- (id)initWithCoder:(NSCoder *)aDecoder
-{
-    self = [super init];
-    
-    if (nil != self)
-    {
-        [self setLanguage:(STALanguage) [aDecoder decodeIntForKey:kSymbolLanguageKey]];
-        [self setSymbolType:(STASymbolType) [aDecoder decodeIntForKey:kSymbolSymbolTypeKey]];
-        [self setSymbolName:[aDecoder decodeObjectForKey:kSymbolSymbolNameKey]];
-//        [self setParentName:[aDecoder decodeObjectForKey:kSymbolParentNameKey]];
-        [self setUrl:[aDecoder decodeObjectForKey:kSymbolURLKey]];
-        [self setDocSet:[aDecoder decodeObjectForKey:kSymbolDocSetKey]];
-    }
-    
+    _language = [plist[STALanguageKey] intValue];
+    _symbolType = [plist[STATypeKey] intValue];
+    _symbolName = plist[STANameKey];
+    _url = [NSURL URLWithString:plist[STAURLKey]];
+    _docSet = docSet;
+
     return self;
 }
 
-- (void)encodeWithCoder:(NSCoder *)aCoder
-{
-    [aCoder encodeInt:[self language] forKey:kSymbolLanguageKey];
-    [aCoder encodeInt:[self symbolType] forKey:kSymbolSymbolTypeKey];
-    [aCoder encodeObject:[self symbolName] forKey:kSymbolSymbolNameKey];
-//    [aCoder encodeObject:[self parentName] forKey:kSymbolParentNameKey];
-    [aCoder encodeObject:[self url] forKey:kSymbolURLKey];
-    [aCoder encodeObject:[self docSet] forKey:kSymbolDocSetKey];
+- (id)propertyListRepresentation {
+    return @{
+        STALanguageKey: @(_language),
+        STATypeKey: @(_symbolType),
+        STANameKey: _symbolName,
+        STAURLKey: [_url absoluteString]
+    };
 }
 
 - (NSUInteger)hash

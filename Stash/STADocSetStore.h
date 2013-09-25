@@ -7,19 +7,19 @@
 //
 
 #import <Foundation/Foundation.h>
-
 #import "STADocSet.h"
 
 @interface STADocSetStore : NSObject
 
-@property (copy, nonatomic) NSArray *docsets;
-@property (copy, nonatomic) NSArray *indexingDocsets;
+@property (nonatomic, readonly) NSArray *docSets;
+@property (nonatomic, readonly) NSArray *indexingDocsets;
+@property (nonatomic, readonly) NSArray *allDocsets;
 
-@property (readonly, nonatomic) NSArray *allDocsets;
+- (instancetype)initWithCacheDirectory:(NSURL *)cacheURL;
 
-@property (readonly) BOOL isEmpty;
+- (void)loadWithCompletionHandler:(void (^)(NSError *error))completionHandler;
 
-- (void)docSetDidBeginIndexing:(STADocSet *)docset;
-- (void)docSetDidFinishIndexing:(STADocSet *)docset;
+- (void)searchString:(NSString *)searchString method:(STASearchMethod)method completionHandler:(void(^)(NSArray *results))completionHandler;
+- (void)searchString:(NSString *)searchString inDocSets:(NSArray *)docSets method:(STASearchMethod)method completionHandler:(void(^)(NSArray *results))completionHandler;
 
 @end
