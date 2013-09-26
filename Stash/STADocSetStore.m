@@ -90,7 +90,7 @@ static const char *sta_queue_label(const char *label) {
 }
 
 - (void)loadSymbolsForDocSet:(STADocSet *)docSet {
-    if ([docSet.symbols count] > 0)
+    if (docSet.symbols != nil)
         return;
 
     _indexingCount++;

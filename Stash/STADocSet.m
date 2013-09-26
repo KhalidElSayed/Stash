@@ -59,8 +59,6 @@ static NSString * const STASymbolsKey = @"symbols";
         _date = date;
     }
 
-    _symbols = @[];
-
     return self;
 }
 
@@ -104,11 +102,14 @@ static NSString * const STASymbolsKey = @"symbols";
         plist[STAPlatformVersionKey] = _platformVersion;
     }
 
-    NSMutableArray *plistSymbols = [NSMutableArray arrayWithCapacity:[_symbols count]];
-    for (STASymbol *symbol in _symbols) {
-        [plistSymbols addObject:[symbol propertyListRepresentation]];
+    if (_symbols) {
+        NSMutableArray *plistSymbols = [NSMutableArray arrayWithCapacity:[_symbols count]];
+        for (STASymbol *symbol in _symbols) {
+            [plistSymbols addObject:[symbol propertyListRepresentation]];
+        }
+        plist[STASymbolsKey] = plistSymbols;
     }
-    plist[STASymbolsKey] = plistSymbols;
+
     return plist;
 }
 
@@ -144,6 +145,9 @@ static NSString * const STASymbolsKey = @"symbols";
 
 - (void)search:(NSString *)searchString method:(STASearchMethod)method onResult:(void(^)(STASymbol *))result
 {
+    if (!_symbols)
+        return;
+
 #ifdef DEBUG
     NSDate *start = [NSDate date];
 #endif
