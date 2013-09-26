@@ -59,7 +59,7 @@ static const char *sta_queue_label(const char *label) {
 
 - (void)loadWithCompletionHandler:(void (^)(NSError *error))completionHandler {
     dispatch_async(_scanQueue, ^{
-        _docSets = [self loadCachedDocSets];
+        [self loadCachedDocSets];
         _loaded = YES;
 
         [self checkForUpdatedDocSets];
@@ -71,7 +71,7 @@ static const char *sta_queue_label(const char *label) {
     });
 }
 
-- (NSDictionary *)loadCachedDocSets {
+- (void)loadCachedDocSets {
     NSMutableDictionary *docSets = [NSMutableDictionary dictionary];
 
     NSArray *urls = [[NSFileManager defaultManager] contentsOfDirectoryAtURL:_cacheURL
@@ -90,7 +90,13 @@ static const char *sta_queue_label(const char *label) {
         }
     }
 
-    return docSets;
+    _docSets = docSets;
+
+    if ([self.delegate respondsToSelector:@selector(docSetStoreDidUpdateDocSets:)]) {
+        dispatch_async(self.delegateQueue, ^{
+            [self.delegate docSetStoreDidUpdateDocSets:self];
+        });
+    }
 }
 
 /**
