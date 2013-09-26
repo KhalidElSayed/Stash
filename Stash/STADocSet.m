@@ -169,11 +169,6 @@ static NSString * const STASymbolsKey = @"symbols";
 #endif
 }
 
-- (void)unload
-{
-    [self setSymbols:[NSMutableArray array]];
-}
-
 - (NSUInteger)hash
 {
     return [self.identifier hash] ^ [self.docSetVersion hash] ^ [self.date hash];

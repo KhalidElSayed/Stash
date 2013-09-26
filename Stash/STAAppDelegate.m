@@ -74,7 +74,6 @@
     self.mainWindowController.docsetStore = _docSetStore;
     [_docSetStore loadWithCompletionHandler:^(NSError *error) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self.preferencesController registerDocSets:_docSetStore.docSets];
             [self.mainWindowController setEnabled:YES];
         });
     }];
@@ -175,15 +174,9 @@
 }
 
 #pragma mark - Prefs Delegate
+
 - (void)preferencesControllerDidUpdateSelectedDocsets:(STAPreferencesController *)prefsController
 {
-    for (STADocSet *docset in [_docSetStore docSets])
-    {
-        if (![[prefsController enabledDocsets] containsObject:docset])
-        {
-            [docset unload];
-        }
-    }
 }
 
 - (void)preferencesControllerDidUpdateMenuShortcut:(STAPreferencesController *)prefsController

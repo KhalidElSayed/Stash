@@ -229,10 +229,12 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
 }
 
 - (void)docSetStoreDidUpdateDocSets:(STADocSetStore *)docSetStore {
+    [self.preferencesController registerDocSets:docSetStore.docSets];
     _indexingDocSets = [docSetStore.docSets sortedArrayUsingComparator:^NSComparisonResult(STADocSet *obj1, STADocSet *obj2) {
         return [obj1.name localizedStandardCompare:obj2.name];
     }];
     [[self indexingDocsetsView] reloadData];
+    [self search:self.searchField];
 }
 
 - (void)docSetStoreWillBeginIndexing:(STADocSetStore *)docSetStore {
@@ -248,6 +250,7 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
 
 - (void)docSetStoreDidFinishIndexing:(STADocSetStore *)docSetStore {
     [self updateWindow];
+    [self search:self.searchField];
 }
 
 #pragma mark - Table View Data Source

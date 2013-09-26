@@ -26,6 +26,7 @@ static const char *sta_queue_label(const char *label) {
     FSEventStreamRef _eventStream;
     dispatch_queue_t _scanQueue;
     dispatch_queue_t _indexQueue;
+    dispatch_source_t _timerSource;
     NSUInteger _indexingCount;
 }
 
@@ -143,6 +144,13 @@ static const char *sta_queue_label(const char *label) {
     dispatch_group_t group = dispatch_group_create();
     dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
 
+    if ([searchString length] < 1) {
+        if (completionHandler) {
+            completionHandler(results);
+        }
+        return;
+    }
+
     for (STADocSet *docSet in docSets) {
         dispatch_group_async(group, queue, ^{
             [docSet search:searchString
@@ -226,14 +234,21 @@ static NSComparator STADocSetComparator = ^(STADocSet *obj1, STADocSet *obj2) {
 
 static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCallBackInfo, size_t numEvents, void *eventPaths, const FSEventStreamEventFlags eventFlags[], const FSEventStreamEventId eventIds[]) {
 	STADocSetStore *self = (__bridge STADocSetStore *)clientCallBackInfo;
-    [self checkForUpdatedDocSets];
-    // TODO: Schedule, wait for period of idle time
+    dispatch_source_set_timer(self->_timerSource, dispatch_time(DISPATCH_TIME_NOW, 2ull * NSEC_PER_SEC), DISPATCH_TIME_FOREVER, 1ull * NSEC_PER_SEC);
 }
 
 - (void)startMonitoring {
     if (_eventStream) {
         [self stopMonitoring];
     }
+
+    // Wait for a period of idle time before updating doc sets
+    __weak STADocSetStore *weakSelf = self;
+    _timerSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, _scanQueue);
+    dispatch_source_set_event_handler(_timerSource, ^{
+        [weakSelf checkForUpdatedDocSets];
+    });
+    dispatch_resume(_timerSource);
 
     FSEventStreamContext streamContext = {};
 	streamContext.info = (__bridge void *)self;
@@ -248,7 +263,7 @@ static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCal
 									  &streamContext,
 									  (__bridge CFArrayRef)folderPaths,
 									  kFSEventStreamEventIdSinceNow,
-									  2.0,
+									  1.0,
 									  kFSEventStreamCreateFlagUseCFTypes);
     FSEventStreamSetDispatchQueue(_eventStream, _scanQueue);
 	FSEventStreamStart(_eventStream);
@@ -260,6 +275,9 @@ static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCal
 		FSEventStreamInvalidate(_eventStream);
 		FSEventStreamRelease(_eventStream);
         _eventStream = NULL;
+
+        dispatch_source_cancel(_timerSource);
+        _timerSource = nil;
     }
 }
 
