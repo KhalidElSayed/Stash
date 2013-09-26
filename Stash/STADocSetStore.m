@@ -80,6 +80,9 @@ static const char *sta_queue_label(const char *label) {
                                                                        error:nil];
 
     for (NSURL *url in urls) {
+        if (![url.pathExtension isEqualToString:STAIndexExtension])
+            continue;
+
         NSDictionary *plist = [NSDictionary dictionaryWithContentsOfURL:url];
         STADocSet *docSet = [STADocSet docSetWithPropertyListRepresentation:plist];
         if (docSet) {
@@ -88,6 +91,28 @@ static const char *sta_queue_label(const char *label) {
     }
 
     return docSets;
+}
+
+/**
+ * Removes cached indexes for doc sets that no longer exists.
+ */
+- (void)cleanCachedDocSets {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSArray *urls = [fileManager contentsOfDirectoryAtURL:_cacheURL
+                               includingPropertiesForKeys:nil
+                                                  options:0
+                                                    error:nil];
+
+    for (NSURL *url in urls) {
+        if (![[url pathExtension] isEqualToString:STAIndexExtension])
+            continue;
+
+        NSString *identifier = [[url lastPathComponent] stringByDeletingPathExtension];
+
+        if (_docSets[identifier] == nil) {
+            [fileManager removeItemAtURL:url error:nil];
+        }
+    }
 }
 
 - (void)loadSymbolsForDocSet:(STADocSet *)docSet {
@@ -230,6 +255,8 @@ static NSComparator STADocSetComparator = ^(STADocSet *obj1, STADocSet *obj2) {
             [self.delegate docSetStoreDidUpdateDocSets:self];
         });
     }
+
+    [self cleanCachedDocSets];
 }
 
 static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCallBackInfo, size_t numEvents, void *eventPaths, const FSEventStreamEventFlags eventFlags[], const FSEventStreamEventId eventIds[]) {
