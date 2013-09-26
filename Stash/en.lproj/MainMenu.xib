@@ -934,7 +934,7 @@
                                         </scroller>
                                     </scrollView>
                                     <customView hidden="YES" id="1480">
-                                        <rect key="frame" x="183" y="231" width="376" height="150"/>
+                                        <rect key="frame" x="183" y="239" width="376" height="150"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                         <subviews>
                                             <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" setsMaxLayoutWidthAtFirstLayout="YES" id="1468">
@@ -943,7 +943,7 @@
                                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="center" id="1469">
                                                     <font key="font" metaFont="system"/>
                                                     <string key="title">Stash could not find any documentation.
-This may be because you do not have Xcode installed, or have not downloaded any documentation sets.</string>
+This may be because you do not have Xcode installed or have not downloaded any documentation sets.</string>
                                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
