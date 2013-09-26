@@ -10,6 +10,16 @@
 #import "STADocSetInternal.h"
 
 static NSString * const STADocSetUTI = @"com.apple.xcode.docset";
+
+static unsigned int STAPlistVersion = 1;
+static NSString * const STAPlistVersionKey = @"plistVersion";
+static NSString * const STAURLKey = @"URL";
+static NSString * const STADateKey = @"date";
+static NSString * const STAIdentifierKey = @"identifier";
+static NSString * const STANameKey = @"name";
+static NSString * const STADocSetVersionKey = @"docSetVersion";
+static NSString * const STAPlatformKey = @"platform";
+static NSString * const STAPlatformVersionKey = @"platformVersion";
 static NSString * const STASymbolsKey = @"symbols";
 
 @implementation STADocSet {
@@ -43,13 +53,71 @@ static NSString * const STASymbolsKey = @"symbols";
         _platform = STAPlatformMacOS;
     }
 
+    NSDate *date = nil;
+    [url getResourceValue:&date forKey:NSURLContentModificationDateKey error:nil];
+    if (date) {
+        _date = date;
+    }
+
     _symbols = @[];
 
     return self;
 }
 
+- (instancetype)initWithPropertyListRepresentation:(id)plist {
+    if (!(self = [super init]))
+        return nil;
+
+    if ([plist isKindOfClass:[NSDictionary class]] == NO)
+        return nil;
+
+    if ([plist[STAPlistVersionKey] unsignedIntValue] != STAPlistVersion)
+        return nil;
+
+    _URL = [NSURL URLByResolvingBookmarkData:plist[STAURLKey] options:0 relativeToURL:nil bookmarkDataIsStale:NULL error:nil];
+    _date = plist[STADateKey];
+    _identifier = plist[STAIdentifierKey];
+    _name = plist[STANameKey];
+    _docSetVersion = plist[STADocSetVersionKey];
+    _platform = [plist[STAPlatformKey] intValue];
+    _platformVersion = plist[STAPlatformVersionKey];
+
+    [self loadSymbolsFromPropertyListRepresentation:plist];
+
+    return self;
+}
+
+- (id)propertyListRepresentation {
+    NSMutableDictionary *plist = [NSMutableDictionary dictionary];
+    plist[STAPlistVersionKey] = @(STAPlistVersion);
+    plist[STAURLKey] = [_URL bookmarkDataWithOptions:0 includingResourceValuesForKeys:nil relativeToURL:nil error:nil];
+    plist[STADateKey] = _date;
+    plist[STAIdentifierKey] = _identifier;
+    plist[STANameKey] = _name;
+    plist[STAPlatformKey] = @(_platform);
+
+    if (_docSetVersion) {
+        plist[STADocSetVersionKey] = _docSetVersion;
+    }
+
+    if (_platformVersion) {
+        plist[STAPlatformVersionKey] = _platformVersion;
+    }
+
+    NSMutableArray *plistSymbols = [NSMutableArray arrayWithCapacity:[_symbols count]];
+    for (STASymbol *symbol in _symbols) {
+        [plistSymbols addObject:[symbol propertyListRepresentation]];
+    }
+    plist[STASymbolsKey] = plistSymbols;
+    return plist;
+}
+
 + (instancetype)docSetWithURL:(NSURL *)url {
     return [[self alloc] initWithURL:url];
+}
+
++ (instancetype)docSetWithPropertyListRepresentation:(id)plist {
+    return [[self alloc] initWithPropertyListRepresentation:plist];
 }
 
 - (void)loadSymbolsFromPropertyListRepresentation:(id)plist {
@@ -72,16 +140,6 @@ static NSString * const STASymbolsKey = @"symbols";
 
 - (void)setIndexingProgress:(double)progress {
     _indexingProgress = progress;
-}
-
-- (id)propertyListRepresentation {
-    NSMutableDictionary *plist = [NSMutableDictionary dictionary];
-    NSMutableArray *plistSymbols = [NSMutableArray arrayWithCapacity:[_symbols count]];
-    for (STASymbol *symbol in _symbols) {
-        [plistSymbols addObject:[symbol propertyListRepresentation]];
-    }
-    plist[STASymbolsKey] = plistSymbols;
-    return plist;
 }
 
 - (void)search:(NSString *)searchString method:(STASearchMethod)method onResult:(void(^)(STASymbol *))result
@@ -114,7 +172,7 @@ static NSString * const STASymbolsKey = @"symbols";
 
 - (NSUInteger)hash
 {
-    return [[self identifier] hash] & [[self docSetVersion] hash];
+    return [self.identifier hash] ^ [self.docSetVersion hash] ^ [self.date hash];
 }
 
 - (BOOL)isEqual:(id)object
@@ -122,7 +180,9 @@ static NSString * const STASymbolsKey = @"symbols";
     if (![object isKindOfClass:[STADocSet class]])
         return NO;
 
-    return [[self identifier] isEqualToString:[object identifier]] && [[self docSetVersion] isEqualToString:[object docSetVersion]];
+    return [[self identifier] isEqualToString:[object identifier]] &&
+           [[self docSetVersion] isEqualToString:[object docSetVersion]] &&
+           [[self date] isEqualTo:[object date]];
 }
 
 - (NSString *)description {

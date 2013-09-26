@@ -10,6 +10,8 @@
 #import "STADocSetInternal.h"
 #import "HTMLParser.h"
 
+static NSString * const STAIndexExtension = @"stashidx";
+
 static const char *sta_queue_label(const char *label) {
     NSBundle *bundle = [NSBundle mainBundle];
     NSString *fullLabel = [[bundle bundleIdentifier] stringByAppendingFormat:@".%s", label];
@@ -56,68 +58,79 @@ static const char *sta_queue_label(const char *label) {
 
 - (void)loadWithCompletionHandler:(void (^)(NSError *error))completionHandler {
     dispatch_async(_scanQueue, ^{
-        _docSets = [self availableDocSets];
-        for (STADocSet *docSet in [_docSets allValues]) {
-            [self loadSymbolsForDocSet:docSet];
-        }
-        //[self startMonitoring];
+        _docSets = [self loadCachedDocSets];
         _loaded = YES;
-        if ([self.delegate respondsToSelector:@selector(docSetStoreDidUpdateDocSets:)]) {
-            dispatch_async(self.delegateQueue, ^{
-                [self.delegate docSetStoreDidUpdateDocSets:self];
-            });
+
+        [self checkForUpdatedDocSets];
+        [self startMonitoring];
+
+        if (completionHandler) {
+            completionHandler(nil);
         }
-        completionHandler(nil);
     });
+}
+
+- (NSDictionary *)loadCachedDocSets {
+    NSMutableDictionary *docSets = [NSMutableDictionary dictionary];
+
+    NSArray *urls = [[NSFileManager defaultManager] contentsOfDirectoryAtURL:_cacheURL
+                                                  includingPropertiesForKeys:nil
+                                                                     options:0
+                                                                       error:nil];
+
+    for (NSURL *url in urls) {
+        NSDictionary *plist = [NSDictionary dictionaryWithContentsOfURL:url];
+        STADocSet *docSet = [STADocSet docSetWithPropertyListRepresentation:plist];
+        if (docSet) {
+            docSets[docSet.identifier] = docSet;
+        }
+    }
+
+    return docSets;
 }
 
 - (void)loadSymbolsForDocSet:(STADocSet *)docSet {
     if ([docSet.symbols count] > 0)
         return;
 
-    NSURL *indexURL = [[_cacheURL URLByAppendingPathComponent:docSet.identifier isDirectory:NO] URLByAppendingPathExtension:@"stashidx"];
-    NSDictionary *cache = [NSDictionary dictionaryWithContentsOfURL:indexURL];
-    if (cache) {
-        // TODO: Only if version, URL, and date match
-        [docSet loadSymbolsFromPropertyListRepresentation:cache];
-    } else {
-        _indexingCount++;
-        if (_indexingCount == 1) {
-            _indexing = YES;
-            if ([self.delegate respondsToSelector:@selector(docSetStoreWillBeginIndexing:)]) {
-                dispatch_async(self.delegateQueue, ^{
-                    [self.delegate docSetStoreWillBeginIndexing:self];
-                });
-            }
+    _indexingCount++;
+    if (_indexingCount == 1) {
+        _indexing = YES;
+        if ([self.delegate respondsToSelector:@selector(docSetStoreWillBeginIndexing:)]) {
+            dispatch_async(self.delegateQueue, ^{
+                [self.delegate docSetStoreWillBeginIndexing:self];
+            });
+        }
+    }
+
+    dispatch_async(_indexQueue, ^{
+        [self indexDocSet:docSet];
+
+        NSError *error = nil;
+        NSURL *indexURL = [[_cacheURL URLByAppendingPathComponent:docSet.identifier isDirectory:NO] URLByAppendingPathExtension:STAIndexExtension];
+        NSData *data = [NSPropertyListSerialization dataWithPropertyList:[docSet propertyListRepresentation]
+                                                                  format:NSPropertyListBinaryFormat_v1_0
+                                                                 options:0
+                                                                   error:&error];
+        if (error) {
+            NSLog(@"Error serializing cache plist: %@", error);
+        } else {
+            [data writeToURL:indexURL atomically:YES];
         }
 
-        dispatch_async(_indexQueue, ^{
-            [self indexDocSet:docSet];
-
-            NSError *error = nil;
-            NSData *data = [NSPropertyListSerialization dataWithPropertyList:[docSet propertyListRepresentation]
-                                                                      format:NSPropertyListBinaryFormat_v1_0
-                                                                     options:0
-                                                                       error:&error];
-            if (error) {
-                NSLog(@"Error serializing cache plist: %@", error);
-            } else {
-                [data writeToURL:indexURL atomically:YES];
-            }
-
-            dispatch_async(_scanQueue, ^{
-                _indexingCount--;
-                if (_indexingCount == 0) {
-                    _indexing = NO;
-                    if ([self.delegate respondsToSelector:@selector(docSetStoreDidFinishIndexing:)]) {
-                        dispatch_async(self.delegateQueue, ^{
-                            [self.delegate docSetStoreDidFinishIndexing:self];
-                        });
-                    }
+        dispatch_async(_scanQueue, ^{
+            _indexingCount--;
+            if (_indexingCount == 0) {
+                _indexing = NO;
+                if ([self.delegate respondsToSelector:@selector(docSetStoreDidFinishIndexing:)]) {
+                    dispatch_async(self.delegateQueue, ^{
+                        [self.delegate docSetStoreDidFinishIndexing:self];
+                    });
                 }
-            });
+            }
         });
-    }
+    });
+
 }
 
 - (void)searchString:(NSString *)searchString method:(STASearchMethod)method completionHandler:(void(^)(NSArray *results))completionHandler {
@@ -144,17 +157,16 @@ static const char *sta_queue_label(const char *label) {
 
     dispatch_group_notify(group, queue, ^{
         [results sortUsingSelector:@selector(compare:)];
-        completionHandler(results);
+        if (completionHandler) {
+            completionHandler(results);
+        }
     });
 }
 
 static NSComparator STADocSetComparator = ^(STADocSet *obj1, STADocSet *obj2) {
     NSComparisonResult result = [obj1.docSetVersion compare:obj2.docSetVersion options:NSNumericSearch];
     if (result == NSOrderedSame) {
-        NSDate *date1, *date2;
-        [obj1.URL getResourceValue:&date1 forKey:NSURLContentModificationDateKey error:nil];
-        [obj2.URL getResourceValue:&date2 forKey:NSURLContentModificationDateKey error:nil];
-        result = [date1 compare:date2];
+        result = [obj1.date compare:obj2.date];
     }
 
     return result;
@@ -173,9 +185,12 @@ static NSComparator STADocSetComparator = ^(STADocSet *obj1, STADocSet *obj2) {
         NSArray *directoryDocSets = [self docSetsAtURL:directory];
 
         for (STADocSet *docSet in directoryDocSets) {
-            STADocSet *existingDocSet = _docSets[docSet.identifier];
+            STADocSet *existingDocSet = docSets[docSet.identifier];
             if (!existingDocSet || STADocSetComparator(existingDocSet, docSet) == NSOrderedAscending) {
-                docSets[docSet.identifier] = docSet;
+                // Use the already-loaded instance if equal
+                STADocSet *loadedDocSet = _docSets[docSet.identifier];
+
+                docSets[docSet.identifier] = [loadedDocSet isEqual:docSet] ? loadedDocSet : docSet;
             }
         }
     }
@@ -192,8 +207,20 @@ static NSComparator STADocSetComparator = ^(STADocSet *obj1, STADocSet *obj2) {
 }
 
 - (void)checkForUpdatedDocSets {
-    NSDictionary *currentDocSets = [self availableDocSets];
-    if (![currentDocSets isEqual:_docSets]) {
+    NSDictionary *availableDocSets = [self availableDocSets];
+    if ([availableDocSets isEqual:_docSets])
+        return;
+
+    for (STADocSet *docSet in [availableDocSets allValues]) {
+        [self loadSymbolsForDocSet:docSet];
+    }
+
+    _docSets = availableDocSets;
+
+    if ([self.delegate respondsToSelector:@selector(docSetStoreDidUpdateDocSets:)]) {
+        dispatch_async(self.delegateQueue, ^{
+            [self.delegate docSetStoreDidUpdateDocSets:self];
+        });
     }
 }
 

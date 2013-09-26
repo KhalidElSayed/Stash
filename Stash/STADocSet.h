@@ -20,6 +20,7 @@ typedef enum
 @interface STADocSet : NSObject
 
 @property (nonatomic, readonly) NSURL *URL;
+@property (nonatomic, readonly) NSDate *date;
 @property (nonatomic, readonly) NSString *identifier;
 @property (nonatomic, readonly) NSString *name;
 @property (nonatomic, readonly) NSString *docSetVersion;
@@ -28,6 +29,7 @@ typedef enum
 @property (nonatomic, readonly) double indexingProgress;
 
 + (instancetype)docSetWithURL:(NSURL *)url;
++ (instancetype)docSetWithPropertyListRepresentation:(id)plist;
 
 - (id)propertyListRepresentation;
 
