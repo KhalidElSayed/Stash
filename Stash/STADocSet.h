@@ -25,6 +25,7 @@ typedef enum
 @property (nonatomic, readonly) NSString *docSetVersion;
 @property (nonatomic, readonly) STAPlatform platform;
 @property (nonatomic, readonly) NSString *platformVersion;
+@property (nonatomic, readonly) double indexingProgress;
 
 + (instancetype)docSetWithURL:(NSURL *)url;
 

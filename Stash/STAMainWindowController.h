@@ -13,8 +13,9 @@
 
 #import "STAPreferencesController.h"
 
-@interface STAMainWindowController : NSWindowController <NSWindowDelegate, NSSplitViewDelegate>
+@interface STAMainWindowController : NSWindowController <NSWindowDelegate, NSSplitViewDelegate, STADocSetStoreDelegate>
 
+@property (nonatomic) BOOL enabled;
 @property (strong, nonatomic) STADocSetStore *docsetStore;
 
 @property (strong) IBOutlet NSTableView *resultsTable;
@@ -36,9 +37,5 @@
 - (IBAction)hideSearchBar:(id)sender;
 - (IBAction)showFindUI;
 - (IBAction)searchWithinPage:(id)sender;
-
-- (void)stashDidBeginIndexing:(id)sender;
-- (void)stashWillAddDocumentation;
-- (void)docSetsDidUpdate;
 
 @end

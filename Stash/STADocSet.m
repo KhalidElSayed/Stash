@@ -58,11 +58,20 @@ static NSString * const STASymbolsKey = @"symbols";
     for (id plistSymbol in plistSymbols) {
         [symbols addObject:[[STASymbol alloc] initWithPropertyListRepresentation:plistSymbol docSet:self]];
     }
-    _symbols = symbols;
+    [self setSymbols:symbols];
+}
+
+- (NSArray *)symbols {
+    return _symbols;
 }
 
 - (void)setSymbols:(NSArray *)symbols {
     _symbols = symbols;
+    [self setIndexingProgress:100.0];
+}
+
+- (void)setIndexingProgress:(double)progress {
+    _indexingProgress = progress;
 }
 
 - (id)propertyListRepresentation {

@@ -25,7 +25,9 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
 
 @end
 
-@implementation STAMainWindowController
+@implementation STAMainWindowController {
+    NSArray *_indexingDocSets;
+}
 
 - (void)windowDidLoad
 {
@@ -51,9 +53,10 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
                            bundleInfo[@"CFBundleName"],
                            bundleInfo[@"CFBundleShortVersionString"]];
     [[self resultWebView] setApplicationNameForUserAgent:userAgent];
-    
-    [[self searchField] setEnabled:NO];
-    [[self titleView] setStringValue:@"Stash is Loading, Please Wait..."];
+
+    _indexingDocSets = @[];
+
+    [self updateWindow];
     
     [NSEvent addLocalMonitorForEventsMatchingMask:NSKeyDownMask handler:^ NSEvent * (NSEvent *e)
      {
@@ -100,21 +103,36 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
      }];
 }
 
-- (void)setDocsetStore:(STADocSetStore *)docsetStore
-{
-    _docsetStore = docsetStore;
-    
-    [[self searchField] setEnabled:YES];
-    [[self searchField] selectText:self];
-    [[self indexingDocsetsContainer] setHidden:YES];
-    if ([[[self docsetStore] allDocsets] count] > 0)
-    {
-        [[self titleView] setStringValue:@""];
-    }
-    else
-    {
-        [[self titleView] setStringValue:@"Stash Could Not Find Any Documentation"];
-        [[self docsetsNotFoundView] setHidden:NO];
+- (void)setEnabled:(BOOL)enabled {
+    _enabled = enabled;
+    [self updateWindow];
+}
+
+- (void)updateWindow {
+    if (self.docsetStore.loaded) {
+        if ([self.docsetStore.docSets count] > 0) {
+            [self.docsetsNotFoundView setHidden:YES];
+
+            if (self.docsetStore.indexing) {
+                [self.titleView setStringValue:@"Stash is Indexing, Please Wait..."];
+                [self.indexingDocsetsContainer setHidden:NO];
+                [self.searchField setEnabled:NO];
+            } else {
+                [self.titleView setStringValue:self.resultWebView.mainFrameTitle];
+                [self.indexingDocsetsContainer setHidden:YES];
+                [self.searchField setEnabled:YES];
+                [self.searchField selectText:self];
+            }
+        } else {
+            [self.searchField setEnabled:NO];
+            [self.docsetsNotFoundView setHidden:NO];
+            [self.indexingDocsetsContainer setHidden:YES];
+        }
+    } else {
+        [self.titleView setStringValue:@"Stash is Loading, Please Wait..."];
+        [self.searchField setEnabled:NO];
+        [self.docsetsNotFoundView setHidden:YES];
+        [self.indexingDocsetsContainer setHidden:YES];
     }
 }
 
@@ -210,27 +228,33 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
     [[self searchField] selectText:self];
 }
 
-- (void)stashDidBeginIndexing:(id)sender
-{
-    [[self titleView] setStringValue:@"Stash is Indexing, Please Wait..."];
-    [[self indexingDocsetsContainer] setHidden:NO];
+- (void)docSetStoreDidUpdateDocSets:(STADocSetStore *)docSetStore {
+    _indexingDocSets = [docSetStore.docSets sortedArrayUsingComparator:^NSComparisonResult(STADocSet *obj1, STADocSet *obj2) {
+        return [obj1.name localizedStandardCompare:obj2.name];
+    }];
     [[self indexingDocsetsView] reloadData];
 }
 
-- (void)stashWillAddDocumentation
-{
-    [[self docsetsNotFoundView] setHidden:YES];
+- (void)docSetStoreWillBeginIndexing:(STADocSetStore *)docSetStore {
+    [self updateWindow];
 }
 
-- (void)docSetsDidUpdate
-{
-    [[self indexingDocsetsView] reloadData];
+- (void)docSetStore:(STADocSetStore *)docSetStore didReachIndexingProgress:(double)progress forDocSet:(STADocSet *)docSet {
+    NSUInteger index = [_indexingDocSets indexOfObject:docSet];
+    if (index != NSNotFound) {
+        [self.indexingDocsetsView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:index] columnIndexes:[NSIndexSet indexSetWithIndex:1]];
+    }
+}
+
+- (void)docSetStoreDidFinishIndexing:(STADocSetStore *)docSetStore {
+    [self updateWindow];
 }
 
 #pragma mark - Table View Data Source
+
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView
 {
-    return tableView == [self indexingDocsetsView] ? [[[self docsetStore] allDocsets] count] : [[self sortedResults] count];
+    return tableView == [self indexingDocsetsView] ? [_indexingDocSets count] : [[self sortedResults] count];
 }
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification
@@ -249,11 +273,17 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
     if (aRow < 0) {
         return nil;
     }
+
     NSUInteger row = (NSUInteger) aRow;
 
     if (tableView == [self resultsTable])
     {
-        STASymbolTableViewCell *view = [[STASymbolTableViewCell alloc] initWithFrame:NSZeroRect];
+        STASymbolTableViewCell *view = [tableView makeViewWithIdentifier:@"ResultView" owner:self];
+        if (!view) {
+            view = [[STASymbolTableViewCell alloc] initWithFrame:NSZeroRect];
+            [view setIdentifier:@"ResultView"];
+        }
+
         [view setSymbolName:row < [[self sortedResults] count] ? [[[self sortedResults] objectAtIndex:row] symbolName] : @""];
         [view setSymbolTypeImage:NSImageFromSTASymbolType([[[self sortedResults] objectAtIndex:row] symbolType])];
         [view setPlatformImage:NSImageFromSTAPlatform([[[[self sortedResults] objectAtIndex:row] docSet] platform])];
@@ -261,38 +291,54 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
     }
     else
     {
-        NSArray *allDocsets = [[[self docsetStore] allDocsets] sortedArrayUsingComparator:^ NSComparisonResult (STADocSet *d1, STADocSet *d2)
-                               {
-                                   return [[d1 name] localizedStandardCompare:[d2 name]];
-                               }];
+        STADocSet *docSet = [_indexingDocSets objectAtIndex:row];
 
         if ([[tableColumn identifier] isEqualToString:@"docset"])
         {
-            NSTextField *textField = [[NSTextField alloc] initWithFrame:NSZeroRect];
-            [textField setEditable:NO];
-            [textField setSelectable:NO];
-            [textField setBordered:NO];
-            [textField setDrawsBackground:NO];
-            [textField setBezeled:NO];
-            [[textField cell] setLineBreakMode:NSLineBreakByTruncatingTail];
-            [textField setStringValue:[[allDocsets objectAtIndex:row] name] ? : @""];
+            NSTextField *textField = [tableView makeViewWithIdentifier:@"IndexingNameView" owner:self];
+            if (!textField) {
+                textField = [[NSTextField alloc] initWithFrame:NSZeroRect];
+                [textField setIdentifier:@"IndexingNameView"];
+                [textField setEditable:NO];
+                [textField setSelectable:NO];
+                [textField setBordered:NO];
+                [textField setDrawsBackground:NO];
+                [textField setBezeled:NO];
+                [[textField cell] setLineBreakMode:NSLineBreakByTruncatingTail];
+            }
+
+            [textField setStringValue:docSet.name];
             return textField;
         }
-        else if ([[tableColumn identifier] isEqualToString:@"progress"] && [[[self docsetStore] indexingDocsets] containsObject:[allDocsets objectAtIndex:row]])
+        else if ([[tableColumn identifier] isEqualToString:@"progress"])
         {
-            NSProgressIndicator *twirler = [[NSProgressIndicator alloc] initWithFrame:NSMakeRect(0.0f, 0.0f, 16.0f, 16.0f)];
-            [twirler setStyle:NSProgressIndicatorSpinningStyle];
-            [twirler setControlSize:NSSmallControlSize];
-            [twirler startAnimation:self];
-            return twirler;
-        }
-        else
-        {
-            NSImageView *tick = [[NSImageView alloc] initWithFrame:NSZeroRect];
-            [tick setImage:[NSImage imageNamed:@"Tick"]];
-            return tick;
+            if (docSet.indexingProgress < 100.0) {
+                NSProgressIndicator *progressView = [tableView makeViewWithIdentifier:@"IndexingProgressView" owner:self];
+                if (!progressView) {
+                    progressView = [[NSProgressIndicator alloc] initWithFrame:NSMakeRect(0.0f, 0.0f, 16.0f, 16.0f)];
+                    [progressView setIdentifier:@"IndexingProgressView"];
+                    [progressView setStyle:NSProgressIndicatorSpinningStyle];
+                    [progressView setControlSize:NSSmallControlSize];
+                    [progressView setIndeterminate:NO];
+                }
+
+                [progressView setDoubleValue:docSet.indexingProgress];
+                return progressView;
+            } else {
+                NSImageView *tick = [tableView makeViewWithIdentifier:@"TickImageView" owner:self];
+                if (!tick) {
+                    tick = [[NSImageView alloc] initWithFrame:NSZeroRect];
+                    [tick setIdentifier:@"TickImageView"];
+                    [tick setImageAlignment:NSImageAlignLeft];
+                    [tick setImage:[NSImage imageNamed:@"Tick"]];
+                }
+
+                return tick;
+            }
         }
     }
+
+    return nil;
 }
 
 - (BOOL)tableView:(NSTableView *)tableView shouldSelectRow:(NSInteger)row

@@ -2,8 +2,10 @@
 
 @interface STADocSet (STAInternal)
 
+@property (nonatomic) NSArray *symbols;
+
 - (void)loadSymbolsFromPropertyListRepresentation:(id)plist;
-- (void)setSymbols:(NSArray *)symbols;
+- (void)setIndexingProgress:(double)progress;
 
 - (void)search:(NSString *)searchString method:(STASearchMethod)method onResult:(void(^)(STASymbol *))result;
 

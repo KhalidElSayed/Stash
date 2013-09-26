@@ -18,30 +18,31 @@ static const char *sta_queue_label(const char *label) {
 
 @implementation STADocSetStore {
     NSURL *_cacheURL;
-    NSMutableArray *_indexingDocsets;
     NSDictionary *_docSets;
 
     NSMutableSet *_locations;
     FSEventStreamRef _eventStream;
     dispatch_queue_t _scanQueue;
     dispatch_queue_t _indexQueue;
+    NSUInteger _indexingCount;
 }
 
 - (NSArray *)docSets {
     return [_docSets allValues];
 }
 
-- (instancetype)initWithCacheDirectory:(NSURL *)cacheURL {
+- (instancetype)initWithCacheDirectory:(NSURL *)cacheURL delegate:(id<STADocSetStoreDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
     if (!(self = [super init]))
         return nil;
 
     NSParameterAssert(cacheURL != nil);
 
     _cacheURL = cacheURL;
+    _delegate = delegate;
+    _delegateQueue = queue ?: dispatch_get_main_queue();
     _scanQueue = dispatch_queue_create(sta_queue_label("docSetScanning"), DISPATCH_QUEUE_SERIAL);
     _indexQueue = dispatch_queue_create(sta_queue_label("docSetIndexing"), DISPATCH_QUEUE_SERIAL);
     _docSets = @{};
-    _indexingDocsets = [NSMutableArray array];
 
     _locations = [NSMutableSet set];
     [self addStandardLocations];
@@ -60,24 +61,62 @@ static const char *sta_queue_label(const char *label) {
             [self loadSymbolsForDocSet:docSet];
         }
         //[self startMonitoring];
+        _loaded = YES;
+        if ([self.delegate respondsToSelector:@selector(docSetStoreDidUpdateDocSets:)]) {
+            dispatch_async(self.delegateQueue, ^{
+                [self.delegate docSetStoreDidUpdateDocSets:self];
+            });
+        }
         completionHandler(nil);
     });
 }
 
 - (void)loadSymbolsForDocSet:(STADocSet *)docSet {
+    if ([docSet.symbols count] > 0)
+        return;
+
     NSURL *indexURL = [[_cacheURL URLByAppendingPathComponent:docSet.identifier isDirectory:NO] URLByAppendingPathExtension:@"stashidx"];
     NSDictionary *cache = [NSDictionary dictionaryWithContentsOfURL:indexURL];
     if (cache) {
         // TODO: Only if version, URL, and date match
         [docSet loadSymbolsFromPropertyListRepresentation:cache];
     } else {
-        [self indexDocSet:docSet completionHandler:^(NSError *error) {
-            NSData *data = [NSPropertyListSerialization dataWithPropertyList:[docSet propertyListRepresentation] format:NSPropertyListBinaryFormat_v1_0 options:0 error:&error];
+        _indexingCount++;
+        if (_indexingCount == 1) {
+            _indexing = YES;
+            if ([self.delegate respondsToSelector:@selector(docSetStoreWillBeginIndexing:)]) {
+                dispatch_async(self.delegateQueue, ^{
+                    [self.delegate docSetStoreWillBeginIndexing:self];
+                });
+            }
+        }
+
+        dispatch_async(_indexQueue, ^{
+            [self indexDocSet:docSet];
+
+            NSError *error = nil;
+            NSData *data = [NSPropertyListSerialization dataWithPropertyList:[docSet propertyListRepresentation]
+                                                                      format:NSPropertyListBinaryFormat_v1_0
+                                                                     options:0
+                                                                       error:&error];
             if (error) {
                 NSLog(@"Error serializing cache plist: %@", error);
+            } else {
+                [data writeToURL:indexURL atomically:YES];
             }
-            [data writeToURL:indexURL atomically:YES];
-        }];
+
+            dispatch_async(_scanQueue, ^{
+                _indexingCount--;
+                if (_indexingCount == 0) {
+                    _indexing = NO;
+                    if ([self.delegate respondsToSelector:@selector(docSetStoreDidFinishIndexing:)]) {
+                        dispatch_async(self.delegateQueue, ^{
+                            [self.delegate docSetStoreDidFinishIndexing:self];
+                        });
+                    }
+                }
+            });
+        });
     }
 }
 
@@ -214,19 +253,7 @@ static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCal
     return docSets;
 }
 
-- (NSArray *)allDocsets
-{
-    return [self.docSets arrayByAddingObjectsFromArray:_indexingDocsets];
-}
-
 #pragma mark - Indexing
-
-- (void)indexDocSet:(STADocSet *)docSet completionHandler:(void (^)(NSError *error))completionHandler {
-    dispatch_async(_indexQueue, ^{
-        [self indexDocSet:docSet];
-        completionHandler(nil);
-    });
-}
 
 - (void)indexDocSet:(STADocSet *)docSet {
 #ifdef DEBUG
@@ -234,6 +261,7 @@ static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCal
     NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
 #endif
 
+    NSUInteger index = 0;
     NSMutableArray *htmlURLs = [NSMutableArray array];
     NSMutableArray *symbols = [NSMutableArray array];
     NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtURL:docSet.URL
@@ -259,6 +287,15 @@ static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCal
             if (parseError) {
                 NSLog(@"Error parsing %@: %@", url, parseError);
                 continue;
+            }
+
+            index++;
+            double progress = ((double)index / (double)[htmlURLs count]) * 100.0;
+            [docSet setIndexingProgress:progress];
+            if ([self.delegate respondsToSelector:@selector(docSetStore:didReachIndexingProgress:forDocSet:)]) {
+                dispatch_async(self.delegateQueue, ^{
+                    [self.delegate docSetStore:self didReachIndexingProgress:progress forDocSet:docSet];
+                });
             }
 
             NSString *path = [url path];
