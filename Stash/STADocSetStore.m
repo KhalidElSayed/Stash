@@ -100,7 +100,7 @@ static const char *sta_queue_label(const char *label) {
 }
 
 /**
- * Removes cached indexes for doc sets that no longer exists.
+ * Removes cached indexes for doc sets that no longer exist.
  */
 - (void)cleanCachedDocSets {
     NSFileManager *fileManager = [NSFileManager defaultManager];
