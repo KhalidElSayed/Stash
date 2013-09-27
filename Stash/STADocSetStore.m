@@ -386,13 +386,11 @@ static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCal
 
                 NSScanner *scanner = [NSScanner scannerWithString:anchorName];
                 NSString *apiName;
-                NSString *dump;
                 NSString *language;
                 NSString *symbolType;
-                NSString *parent;
                 NSString *symbolName;
 
-                BOOL success = [scanner scanString:@"//" intoString:&dump];
+                BOOL success = [scanner scanString:@"//" intoString:NULL];
                 if (!success) {
                     continue;
                 }
@@ -405,7 +403,7 @@ static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCal
 
                 STASymbol *symbol = nil;
                 if ([apiName isEqualToString:@"api"]) {
-                    success = [scanner scanUpToString:@"/" intoString:&dump];
+                    success = [scanner scanUpToString:@"/" intoString:NULL];
                     [scanner setScanLocation:[scanner scanLocation] + 1];
                     if (!success) {
                         continue;
@@ -423,28 +421,30 @@ static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCal
                 } else {
                     success = [scanner scanUpToString:@"/" intoString:&language];
                     [scanner setScanLocation:[scanner scanLocation] + 1];
-                    if (!success || [language isEqualToString:@"doc"]) { continue; }
+                    if (!success || [language isEqualToString:@"doc"]) {
+                        continue;
+                    }
+
                     success = [scanner scanUpToString:@"/" intoString:&symbolType];
                     [scanner setScanLocation:[scanner scanLocation] + 1];
                     if (!success) {
                         continue;
                     }
 
-                    [scanner scanUpToString:@"/" intoString:&parent];
+                    [scanner scanUpToString:@"/" intoString:&symbolName];
                     NSString *fullPath = [path stringByAppendingFormat:@"#%@", anchorName];
                     if ([scanner scanLocation] < [anchorName length] - 1) {
                         [scanner setScanLocation:[scanner scanLocation] + 1];
                         [scanner scanUpToString:@"/" intoString:&symbolName];
-                        NSURL *symbolURL = [NSURL URLWithString:fullPath];
-                        if (!symbolURL) {
-                            NSLog(@"Invalid URL created for symbol: %@ in %@", anchorName, path);
-                            continue;
-                        }
-
-                        symbol = [[STASymbol alloc] initWithLanguageString:language symbolTypeString:symbolType symbolName:symbolName parentName:parent url:symbolURL docSet:docSet];
-                    } else {
-                        symbol = [[STASymbol alloc] initWithLanguageString:language symbolTypeString:symbolType symbolName:parent url:[NSURL URLWithString:fullPath] docSet:docSet];
                     }
+
+                    NSURL *symbolURL = [NSURL URLWithString:fullPath];
+                    if (!symbolURL) {
+                        NSLog(@"Invalid URL created for symbol: %@ in %@", anchorName, path);
+                        continue;
+                    }
+
+                    symbol = [[STASymbol alloc] initWithLanguageString:language symbolTypeString:symbolType symbolName:symbolName url:[NSURL URLWithString:fullPath] docSet:docSet];
                 }
 
                 if (!symbol)

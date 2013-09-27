@@ -19,28 +19,19 @@ static NSString * const STAURLKey = @"URL";
 
 @implementation STASymbol
 
-- (id)initWithLanguageString:(NSString *)language symbolTypeString:(NSString *)symbolType symbolName:(NSString *)symbolName url:(NSURL *)url docSet:(STADocSet *)docSet
-{
-    return [self initWithLanguageString:language symbolTypeString:symbolType symbolName:symbolName parentName:nil url:url docSet:docSet];
-}
-
-- (id)initWithLanguageString:(NSString *)language symbolTypeString:(NSString *)symbolType symbolName:(NSString *)symbolName parentName:(NSString *)parentName url:(NSURL *)url docSet:(STADocSet *)docSet
-{
-    self = [super init];
+- (instancetype)initWithLanguageString:(NSString *)language symbolTypeString:(NSString *)symbolType symbolName:(NSString *)symbolName url:(NSURL *)url docSet:(STADocSet *)docSet {
+    if (!(self = [super init]))
+        return nil;
 
     NSParameterAssert(url != nil);
     NSParameterAssert(docSet != nil);
     
-    if (nil != self)
-    {
-        [self setLanguage:STALanguageFromNSString(language)];
-        [self setSymbolType:STASymbolTypeFromNSString(symbolType)];
-        [self setSymbolName:symbolName];
-//        [self setParentName:parentName];
-        [self setUrl:url];
-        [self setDocSet:docSet];
-    }
-    
+    [self setLanguage:STALanguageFromNSString(language)];
+    [self setSymbolType:STASymbolTypeFromNSString(symbolType)];
+    [self setSymbolName:symbolName];
+    [self setUrl:url];
+    [self setDocSet:docSet];
+
     return self;
 }
 
@@ -73,7 +64,7 @@ static NSString * const STAURLKey = @"URL";
 
 - (BOOL)isEqual:(id)object
 {
-    return _language == [(STASymbol *)object language] && _symbolType == [(STASymbol *)object symbolType] /*&& [_parentName isEqualToString:[(STASymbol *)object parentName]]*/ && [_symbolName isEqualToString:[(STASymbol *)object symbolName]];
+    return _language == [(STASymbol *)object language] && _symbolType == [(STASymbol *)object symbolType] && [_symbolName isEqualToString:[(STASymbol *)object symbolName]];
 }
 
 - (NSString *)description

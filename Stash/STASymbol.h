@@ -55,12 +55,10 @@ STASymbolType STASymbolTypeFromNSString(NSString *symbolTypeString);
 @property (nonatomic,assign) STALanguage language;
 @property (nonatomic,assign) STASymbolType symbolType;
 @property (nonatomic,copy) NSString *symbolName;
-//@property (nonatomic,copy) NSString *parentName;
 @property (nonatomic,copy) NSURL *url;
 @property (nonatomic,weak) STADocSet *docSet;
 
-- (id)initWithLanguageString:(NSString *)language symbolTypeString:(NSString *)symbolType symbolName:(NSString *)symbolName url:(NSURL *)url docSet:(STADocSet *)docSet;
-- (id)initWithLanguageString:(NSString *)language symbolTypeString:(NSString *)symbolType symbolName:(NSString *)symbolName parentName:(NSString *)parentName url:(NSURL *)url docSet:(STADocSet *)docSet;
+- (instancetype)initWithLanguageString:(NSString *)language symbolTypeString:(NSString *)symbolType symbolName:(NSString *)symbolName url:(NSURL *)url docSet:(STADocSet *)docSet;
 - (instancetype)initWithPropertyListRepresentation:(id)plist docSet:(STADocSet *)docSet;
 - (id)propertyListRepresentation;
 
