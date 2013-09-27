@@ -11,7 +11,7 @@
 static NSString * const STAShowDockIconKey = @"ShowDockIcon";
 static NSString * const STAShowMenuBarIconKey = @"ShowMenuBarIcon";
 static NSString * const STAModifierFlagsKey = @"ModifierFlags";
-static NSString * const STAKeyboardShortcutKey = @"KeyboarShortcut";
+static NSString * const STAKeyboardShortcutKey = @"KeyboardShortcut";
 static NSString * const STADisabledDocSetsKey = @"DisabledDocSets";
 
 static NSString *descriptionStringFromChar(unichar c)
