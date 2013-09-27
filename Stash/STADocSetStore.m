@@ -79,16 +79,26 @@ static const char *sta_queue_label(const char *label) {
                                                                      options:0
                                                                        error:nil];
 
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_semaphore_t sem = dispatch_semaphore_create(1);
+
     for (NSURL *url in urls) {
         if (![url.pathExtension isEqualToString:STAIndexExtension])
             continue;
 
-        NSDictionary *plist = [NSDictionary dictionaryWithContentsOfURL:url];
-        STADocSet *docSet = [STADocSet docSetWithPropertyListRepresentation:plist];
-        if (docSet) {
-            docSets[docSet.identifier] = docSet;
-        }
+        NSData *data = [NSData dataWithContentsOfURL:url];
+        dispatch_group_async(group, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+            id plist = [NSPropertyListSerialization propertyListWithData:data options:0 format:nil error:nil];
+            STADocSet *docSet = [STADocSet docSetWithPropertyListRepresentation:plist];
+            if (docSet) {
+                dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER);
+                docSets[docSet.identifier] = docSet;
+                dispatch_semaphore_signal(sem);
+            }
+        });
     }
+
+    dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
 
     _docSets = docSets;
 
