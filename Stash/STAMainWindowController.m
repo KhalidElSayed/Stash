@@ -266,7 +266,7 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
     if (row < [[self sortedResults] count] && row != -1)
     {
         STASymbol *symbol = [[self sortedResults] objectAtIndex:(NSUInteger) row];
-        NSURLRequest *request = [NSURLRequest requestWithURL:[symbol url]];
+        NSURLRequest *request = [NSURLRequest requestWithURL:[symbol URL]];
         [[[self resultWebView] mainFrame] loadRequest:request];
     }
 }

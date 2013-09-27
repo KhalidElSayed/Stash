@@ -40,7 +40,7 @@ static NSString * const STASymbolsKey = @"symbols";
         return nil;
 
     NSDictionary *info = [bundle infoDictionary];
-    _URL = url;
+    _URL = [url fileReferenceURL];
     _identifier = [bundle bundleIdentifier];
     _name = info[@"CFBundleName"];
     _docSetVersion = info[@"CFBundleVersion"];
@@ -73,6 +73,7 @@ static NSString * const STASymbolsKey = @"symbols";
         return nil;
 
     _URL = [NSURL URLByResolvingBookmarkData:plist[STAURLKey] options:0 relativeToURL:nil bookmarkDataIsStale:NULL error:nil];
+    _URL = [_URL fileReferenceURL];
     _date = plist[STADateKey];
     _identifier = plist[STAIdentifierKey];
     _name = plist[STANameKey];

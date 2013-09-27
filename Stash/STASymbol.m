@@ -15,22 +15,30 @@ NSUInteger STASymbolTypeOrder(STASymbolType type);
 static NSString * const STALanguageKey = @"language";
 static NSString * const STATypeKey = @"type";
 static NSString * const STANameKey = @"name";
-static NSString * const STAURLKey = @"URL";
+static NSString * const STARelativePathKey = @"relativePath";
+static NSString * const STAAnchorKey = @"anchor";
 
-@implementation STASymbol
+@implementation STASymbol {
+    NSString *_relativePath;
+    NSString *_anchor;
+}
 
-- (instancetype)initWithLanguageString:(NSString *)language symbolTypeString:(NSString *)symbolType symbolName:(NSString *)symbolName url:(NSURL *)url docSet:(STADocSet *)docSet {
+- (instancetype)initWithLanguageString:(NSString *)language symbolTypeString:(NSString *)symbolType symbolName:(NSString *)symbolName URL:(NSURL *)fileURL anchor:(NSString *)anchor docSet:(STADocSet *)docSet {
     if (!(self = [super init]))
         return nil;
 
-    NSParameterAssert(url != nil);
+    NSParameterAssert(fileURL != nil);
     NSParameterAssert(docSet != nil);
     
     [self setLanguage:STALanguageFromNSString(language)];
     [self setSymbolType:STASymbolTypeFromNSString(symbolType)];
     [self setSymbolName:symbolName];
-    [self setUrl:url];
     [self setDocSet:docSet];
+
+    // Store as a relative path so bookmark data does not need to be stored for every symbol
+    NSString *basePath = [_docSet.URL path];
+    _relativePath = [[fileURL path] substringFromIndex:[basePath length] + 1];
+    _anchor = anchor;
 
     return self;
 }
@@ -42,19 +50,36 @@ static NSString * const STAURLKey = @"URL";
     _language = [plist[STALanguageKey] intValue];
     _symbolType = [plist[STATypeKey] intValue];
     _symbolName = plist[STANameKey];
-    _url = [NSURL URLWithString:plist[STAURLKey]];
+    _relativePath = plist[STARelativePathKey];
+    _anchor = plist[STAAnchorKey];
     _docSet = docSet;
 
     return self;
 }
 
 - (id)propertyListRepresentation {
-    return @{
+    NSMutableDictionary *plist = [NSMutableDictionary dictionaryWithDictionary:@{
         STALanguageKey: @(_language),
         STATypeKey: @(_symbolType),
         STANameKey: _symbolName,
-        STAURLKey: [_url absoluteString]
-    };
+        STARelativePathKey: _relativePath
+    }];
+
+    if (_anchor) {
+        plist[STAAnchorKey] = _anchor;
+    }
+
+    return plist;
+}
+
+- (NSURL *)URL {
+    if (_anchor) {
+        NSString *anchor = CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(NULL, (CFStringRef)_anchor, NULL, NULL, kCFStringEncodingUTF8));
+        NSString *fullPath = [[_docSet.URL path] stringByAppendingPathComponent:_relativePath];
+        return [NSURL URLWithString:[NSString stringWithFormat:@"%@#%@", fullPath, anchor]];
+    } else {
+        return [_docSet.URL URLByAppendingPathComponent:_relativePath isDirectory:NO];
+    }
 }
 
 - (NSUInteger)hash

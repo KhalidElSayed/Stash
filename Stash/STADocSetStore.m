@@ -75,7 +75,7 @@ static const char *sta_queue_label(const char *label) {
     NSMutableDictionary *docSets = [NSMutableDictionary dictionary];
 
     NSArray *urls = [[NSFileManager defaultManager] contentsOfDirectoryAtURL:_cacheURL
-                                                  includingPropertiesForKeys:nil
+                                                  includingPropertiesForKeys:@[]
                                                                      options:0
                                                                        error:nil];
 
@@ -105,7 +105,7 @@ static const char *sta_queue_label(const char *label) {
 - (void)cleanCachedDocSets {
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSArray *urls = [fileManager contentsOfDirectoryAtURL:_cacheURL
-                               includingPropertiesForKeys:nil
+                               includingPropertiesForKeys:@[]
                                                   options:0
                                                     error:nil];
 
@@ -343,10 +343,7 @@ static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCal
     NSMutableArray *htmlURLs = [NSMutableArray array];
     NSMutableArray *symbols = [NSMutableArray array];
     NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtURL:docSet.URL
-                                                             includingPropertiesForKeys:@[NSURLNameKey,
-                                                                                          NSURLTypeIdentifierKey,
-                                                                                          NSURLIsRegularFileKey,
-                                                                                          NSURLIsDirectoryKey]
+                                                             includingPropertiesForKeys:@[NSURLTypeIdentifierKey]
                                                                                 options:0
                                                                            errorHandler:^BOOL (NSURL *url, NSError *err) { return YES; }];
 
@@ -375,8 +372,6 @@ static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCal
                     [self.delegate docSetStore:self didReachIndexingProgress:progress forDocSet:docSet];
                 });
             }
-
-            NSString *path = [url path];
 
             for (HTMLNode *anchor in [[parser body] findChildTags:@"a"]) {
                 NSString *anchorName = [anchor getAttributeNamed:@"name"];
@@ -410,14 +405,13 @@ static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCal
                     }
 
                     [scanner scanUpToString:@"/" intoString:&symbolName];
-                    NSString *fullPath = [path stringByAppendingFormat:@"#%@", anchorName];
-                    NSURL *symbolURL = [NSURL URLWithString:fullPath];
-                    if (!symbolURL) {
-                        NSLog(@"Invalid URL created for symbol: %@ in %@", anchorName, path);
-                        continue;
-                    }
 
-                    symbol = [[STASymbol alloc] initWithLanguageString:nil symbolTypeString:nil symbolName:symbolName url:symbolURL docSet:docSet];
+                    symbol = [[STASymbol alloc] initWithLanguageString:nil
+                                                      symbolTypeString:nil
+                                                            symbolName:symbolName
+                                                                   URL:url
+                                                                anchor:anchorName
+                                                                docSet:docSet];
                 } else {
                     success = [scanner scanUpToString:@"/" intoString:&language];
                     [scanner setScanLocation:[scanner scanLocation] + 1];
@@ -432,19 +426,17 @@ static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCal
                     }
 
                     [scanner scanUpToString:@"/" intoString:&symbolName];
-                    NSString *fullPath = [path stringByAppendingFormat:@"#%@", anchorName];
                     if ([scanner scanLocation] < [anchorName length] - 1) {
                         [scanner setScanLocation:[scanner scanLocation] + 1];
                         [scanner scanUpToString:@"/" intoString:&symbolName];
                     }
 
-                    NSURL *symbolURL = [NSURL URLWithString:fullPath];
-                    if (!symbolURL) {
-                        NSLog(@"Invalid URL created for symbol: %@ in %@", anchorName, path);
-                        continue;
-                    }
-
-                    symbol = [[STASymbol alloc] initWithLanguageString:language symbolTypeString:symbolType symbolName:symbolName url:[NSURL URLWithString:fullPath] docSet:docSet];
+                    symbol = [[STASymbol alloc] initWithLanguageString:language
+                                                      symbolTypeString:symbolType
+                                                            symbolName:symbolName
+                                                                   URL:url
+                                                                anchor:anchorName
+                                                                docSet:docSet];
                 }
 
                 if (!symbol)
