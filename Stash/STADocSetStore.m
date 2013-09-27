@@ -266,7 +266,7 @@ static NSComparator STADocSetComparator = ^(STADocSet *obj1, STADocSet *obj2) {
 }
 
 static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCallBackInfo, size_t numEvents, void *eventPaths, const FSEventStreamEventFlags eventFlags[], const FSEventStreamEventId eventIds[]) {
-	STADocSetStore *self = (__bridge STADocSetStore *)clientCallBackInfo;
+    STADocSetStore *self = (__bridge STADocSetStore *)clientCallBackInfo;
     dispatch_source_set_timer(self->_timerSource, dispatch_time(DISPATCH_TIME_NOW, 2ull * NSEC_PER_SEC), DISPATCH_TIME_FOREVER, 1ull * NSEC_PER_SEC);
 }
 
@@ -284,29 +284,29 @@ static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCal
     dispatch_resume(_timerSource);
 
     FSEventStreamContext streamContext = {};
-	streamContext.info = (__bridge void *)self;
+    streamContext.info = (__bridge void *)self;
 
-	NSMutableArray *folderPaths = [NSMutableArray array];
-	for (NSURL *url in _locations) {
-		[folderPaths addObject:[url path]];
-	}
+    NSMutableArray *folderPaths = [NSMutableArray array];
+    for (NSURL *url in _locations) {
+        [folderPaths addObject:[url path]];
+    }
 
-	_eventStream = FSEventStreamCreate(kCFAllocatorDefault,
-									  &EventStreamCallback,
-									  &streamContext,
-									  (__bridge CFArrayRef)folderPaths,
-									  kFSEventStreamEventIdSinceNow,
-									  1.0,
-									  kFSEventStreamCreateFlagUseCFTypes);
+    _eventStream = FSEventStreamCreate(kCFAllocatorDefault,
+                                      &EventStreamCallback,
+                                      &streamContext,
+                                      (__bridge CFArrayRef)folderPaths,
+                                      kFSEventStreamEventIdSinceNow,
+                                      1.0,
+                                      kFSEventStreamCreateFlagUseCFTypes);
     FSEventStreamSetDispatchQueue(_eventStream, _scanQueue);
-	FSEventStreamStart(_eventStream);
+    FSEventStreamStart(_eventStream);
 }
 
 - (void)stopMonitoring {
     if (_eventStream) {
         FSEventStreamStop(_eventStream);
-		FSEventStreamInvalidate(_eventStream);
-		FSEventStreamRelease(_eventStream);
+        FSEventStreamInvalidate(_eventStream);
+        FSEventStreamRelease(_eventStream);
         _eventStream = NULL;
 
         dispatch_source_cancel(_timerSource);
