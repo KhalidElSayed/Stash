@@ -211,6 +211,7 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
                 [[self resultsTable] reloadData];
                 if ([self.sortedResults count] > 0) {
                     [self.resultsTable selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
+                    [self.resultsTable scrollRowToVisible:0];
                 }
             }
         });
