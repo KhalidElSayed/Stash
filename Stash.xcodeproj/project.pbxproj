@@ -57,8 +57,6 @@
 		1FBF3DEF157E3F22007B8D97 /* MacOS.png in Resources */ = {isa = PBXBuildFile; fileRef = 1FBF3DEB157E3F22007B8D97 /* MacOS.png */; };
 		1FBF3DF0157E3F22007B8D97 /* MacOS@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1FBF3DEC157E3F22007B8D97 /* MacOS@2x.png */; };
 		1FE7C61516EE2E26008B7F86 /* STADocSetStore.m in Sources */ = {isa = PBXBuildFile; fileRef = 1FE7C61416EE2E26008B7F86 /* STADocSetStore.m */; };
-		C9AA5CFC17EFCC520080CBEA /* HTMLNode.m in Sources */ = {isa = PBXBuildFile; fileRef = C9AA5CF917EFCC520080CBEA /* HTMLNode.m */; };
-		C9AA5CFD17EFCC520080CBEA /* HTMLParser.m in Sources */ = {isa = PBXBuildFile; fileRef = C9AA5CFB17EFCC520080CBEA /* HTMLParser.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -139,10 +137,6 @@
 		1FE7C61316EE2E26008B7F86 /* STADocSetStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = STADocSetStore.h; sourceTree = "<group>"; };
 		1FE7C61416EE2E26008B7F86 /* STADocSetStore.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = STADocSetStore.m; sourceTree = "<group>"; };
 		C9966FC917F37F30008EA391 /* STADocSetInternal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = STADocSetInternal.h; sourceTree = "<group>"; };
-		C9AA5CF817EFCC520080CBEA /* HTMLNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HTMLNode.h; sourceTree = "<group>"; };
-		C9AA5CF917EFCC520080CBEA /* HTMLNode.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HTMLNode.m; sourceTree = "<group>"; };
-		C9AA5CFA17EFCC520080CBEA /* HTMLParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HTMLParser.h; sourceTree = "<group>"; };
-		C9AA5CFB17EFCC520080CBEA /* HTMLParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HTMLParser.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -173,7 +167,6 @@
 			children = (
 				1F09AFF115792B810081DC63 /* Stash */,
 				1F09B00E15792B810081DC63 /* StashTests */,
-				C9AA5CF617EFCC260080CBEA /* Dependencies */,
 				1F09AFEA15792B810081DC63 /* Frameworks */,
 				1F09AFE815792B810081DC63 /* Products */,
 			);
@@ -306,25 +299,6 @@
 			);
 			path = Images;
 			sourceTree = SOURCE_ROOT;
-		};
-		C9AA5CF617EFCC260080CBEA /* Dependencies */ = {
-			isa = PBXGroup;
-			children = (
-				C9AA5CF717EFCC460080CBEA /* Objective-C-HTML-Parser */,
-			);
-			path = Dependencies;
-			sourceTree = "<group>";
-		};
-		C9AA5CF717EFCC460080CBEA /* Objective-C-HTML-Parser */ = {
-			isa = PBXGroup;
-			children = (
-				C9AA5CF817EFCC520080CBEA /* HTMLNode.h */,
-				C9AA5CF917EFCC520080CBEA /* HTMLNode.m */,
-				C9AA5CFA17EFCC520080CBEA /* HTMLParser.h */,
-				C9AA5CFB17EFCC520080CBEA /* HTMLParser.m */,
-			);
-			path = "Objective-C-HTML-Parser";
-			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
@@ -472,11 +446,9 @@
 				1F09B02315795C7F0081DC63 /* STADocSet.m in Sources */,
 				1F09B031157A12E70081DC63 /* STASymbol.m in Sources */,
 				1F50A3A6157BA41C00CF6068 /* STASymbolTableViewCell.m in Sources */,
-				C9AA5CFC17EFCC520080CBEA /* HTMLNode.m in Sources */,
 				1FBF3DE6157CAFEC007B8D97 /* STAPreferencesController.m in Sources */,
 				1F91C26716E3858C00AE40C5 /* STAMainWindowController.m in Sources */,
 				1FE7C61516EE2E26008B7F86 /* STADocSetStore.m in Sources */,
-				C9AA5CFD17EFCC520080CBEA /* HTMLParser.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
