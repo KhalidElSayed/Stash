@@ -8,7 +8,7 @@
 
 #import "STADocSetStore.h"
 #import "STADocSetInternal.h"
-#import "HTMLParser.h"
+#import <libxml/HTMLparser.h>
 
 static NSString * const STAIndexExtension = @"stashidx";
 
@@ -343,6 +343,28 @@ static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCal
 
 #pragma mark - Indexing
 
+/**
+ * libxml2 callback used to extract anchor names from HTML documents.
+ *
+ * The attributes parameter is an array of name/value pairs terminated by a name
+ * with a value of NULL.
+ */
+static void htmlStartElement(void *ctx, const char *name, const char **attributes) {
+    if (!attributes || strcmp(name, "a") != 0)
+        return;
+
+    for (const char **attr = attributes; *attr != NULL; attr += 2) {
+        if (strcmp(*attr, "name") == 0) {
+            const char **value = attr + 1;
+            if (value) {
+                NSMutableArray *array = (__bridge NSMutableArray *)ctx;
+                [array addObject:@(*value)];
+            }
+            break;
+        }
+    }
+}
+
 - (void)indexDocSet:(STADocSet *)docSet {
 #ifdef DEBUG
     NSLog(@"Started indexing %@", docSet);
@@ -365,14 +387,14 @@ static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCal
         }
     }
 
+    htmlSAXHandler handler = {};
+    handler.startElement = (startElementSAXFunc)htmlStartElement;
+
     for (NSURL *url in htmlURLs) {
         @autoreleasepool {
-            NSError *parseError = nil;
-            HTMLParser *parser = [[HTMLParser alloc] initWithContentsOfURL:url error:&parseError];
-            if (parseError) {
-                NSLog(@"Error parsing %@: %@", url, parseError);
-                continue;
-            }
+            NSMutableArray *anchorNames = [NSMutableArray array];
+
+            htmlSAXParseFile([[url path] fileSystemRepresentation], NULL, &handler, (__bridge void *)anchorNames);
 
             index++;
             double progress = ((double)index / (double)[htmlURLs count]) * 100.0;
@@ -383,12 +405,7 @@ static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCal
                 });
             }
 
-            for (HTMLNode *anchor in [[parser body] findChildTags:@"a"]) {
-                NSString *anchorName = [anchor getAttributeNamed:@"name"];
-                if (!anchorName) {
-                    continue;
-                }
-
+            for (NSString *anchorName in anchorNames) {
                 NSScanner *scanner = [NSScanner scannerWithString:anchorName];
                 NSString *apiName;
                 NSString *language;
