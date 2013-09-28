@@ -26,6 +26,7 @@ static const char *sta_queue_label(const char *label) {
     FSEventStreamRef _eventStream;
     dispatch_queue_t _scanQueue;
     dispatch_queue_t _indexQueue;
+    dispatch_queue_t _indexIOQueue;
     dispatch_source_t _timerSource;
     NSUInteger _indexingCount;
 }
@@ -43,8 +44,9 @@ static const char *sta_queue_label(const char *label) {
     _cacheURL = cacheURL;
     _delegate = delegate;
     _delegateQueue = queue ?: dispatch_get_main_queue();
-    _scanQueue = dispatch_queue_create(sta_queue_label("docSetScanning"), DISPATCH_QUEUE_SERIAL);
-    _indexQueue = dispatch_queue_create(sta_queue_label("docSetIndexing"), DISPATCH_QUEUE_SERIAL);
+    _scanQueue = dispatch_queue_create(sta_queue_label("docset-scanning"), DISPATCH_QUEUE_SERIAL);
+    _indexQueue = dispatch_queue_create(sta_queue_label("docset-indexing"), DISPATCH_QUEUE_CONCURRENT);
+    _indexIOQueue = dispatch_queue_create(sta_queue_label("docset-indexingio"), DISPATCH_QUEUE_SERIAL);
     _docSets = @{};
 
     _locations = [NSMutableSet set];
@@ -145,7 +147,7 @@ static const char *sta_queue_label(const char *label) {
         }
     }
 
-    dispatch_async(_indexQueue, ^{
+    dispatch_async(_indexIOQueue, ^{
         [self indexDocSet:docSet];
 
         NSError *error = nil;
@@ -371,7 +373,7 @@ static void htmlStartElement(void *ctx, const char *name, const char **attribute
     NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
 #endif
 
-    NSUInteger index = 0;
+    __block NSUInteger index = 0;
     NSMutableArray *htmlURLs = [NSMutableArray array];
     NSMutableArray *symbols = [NSMutableArray array];
     NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtURL:docSet.URL
@@ -387,36 +389,62 @@ static void htmlStartElement(void *ctx, const char *name, const char **attribute
         }
     }
 
-    htmlSAXHandler handler = {};
+    __block htmlSAXHandler handler = {};
     handler.startElement = (startElementSAXFunc)htmlStartElement;
+
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_semaphore_t symbolsSemaphore = dispatch_semaphore_create(1);
+
+    // Limit the number of concurrent jobs so we do not read in more data than we
+    // can process and do not spawn many threads blocking on I/O.
+    NSUInteger processorCount = [[NSProcessInfo processInfo] processorCount];
+    dispatch_semaphore_t jobSemaphore = dispatch_semaphore_create(processorCount * 2);
 
     for (NSURL *url in htmlURLs) {
         @autoreleasepool {
+            dispatch_semaphore_wait(jobSemaphore, DISPATCH_TIME_FOREVER);
+
             NSMutableArray *anchorNames = [NSMutableArray array];
+            NSData *data = [NSData dataWithContentsOfURL:url];
 
-            htmlSAXParseFile([[url path] fileSystemRepresentation], NULL, &handler, (__bridge void *)anchorNames);
+            dispatch_group_async(group, _indexQueue, ^{
+                @autoreleasepool {
+                    htmlParserCtxtPtr context = htmlCreatePushParserCtxt(&handler, (__bridge void *)anchorNames, [data bytes], (int)[data length], NULL, XML_CHAR_ENCODING_UTF8);
+                    htmlCtxtUseOptions(context, HTML_PARSE_RECOVER | HTML_PARSE_NONET);
+                    htmlParseDocument(context);
+                    htmlFreeParserCtxt(context);
 
-            index++;
-            double progress = ((double)index / (double)[htmlURLs count]) * 100.0;
-            [docSet setIndexingProgress:progress];
-            if ([self.delegate respondsToSelector:@selector(docSetStore:didReachIndexingProgress:forDocSet:)]) {
-                dispatch_async(self.delegateQueue, ^{
-                    [self.delegate docSetStore:self didReachIndexingProgress:progress forDocSet:docSet];
-                });
-            }
+                    index++;
+                    double progress = ((double)index / (double)[htmlURLs count]) * 100.0;
+                    [docSet setIndexingProgress:progress];
+                    if ([self.delegate respondsToSelector:@selector(docSetStore:didReachIndexingProgress:forDocSet:)]) {
+                        dispatch_async(self.delegateQueue, ^{
+                            [self.delegate docSetStore:self didReachIndexingProgress:progress forDocSet:docSet];
+                        });
+                    }
 
-            for (NSString *anchorName in anchorNames) {
-                STASymbol *symbol = [self symbolForAnchorName:anchorName URL:url docSet:docSet];
-                if (!symbol)
-                    continue;
+                    for (NSString *anchorName in anchorNames) {
+                        @autoreleasepool {
+                            STASymbol *symbol = [self symbolForAnchorName:anchorName URL:url docSet:docSet];
+                            if (!symbol)
+                                continue;
 
-                STASymbolType t = [symbol symbolType];
-                if (t != STASymbolTypeBinding && t != STASymbolTypeTag) {
-                    [symbols addObject:symbol];
+                            STASymbolType t = [symbol symbolType];
+                            if (t != STASymbolTypeBinding && t != STASymbolTypeTag) {
+                                dispatch_semaphore_wait(symbolsSemaphore, DISPATCH_TIME_FOREVER);
+                                [symbols addObject:symbol];
+                                dispatch_semaphore_signal(symbolsSemaphore);
+                            }
+                        }
+                    }
+
+                    dispatch_semaphore_signal(jobSemaphore);
                 }
-            }
+            });
         }
     }
+
+    dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
 
     [docSet setSymbols:symbols];
 
