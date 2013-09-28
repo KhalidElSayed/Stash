@@ -474,6 +474,7 @@ static void htmlStartElement(void *ctx, const char *name, const char **attribute
 
     STASymbol *symbol = nil;
     if ([apiName isEqualToString:@"api"]) {
+        // The appledoc project's anchor format, which does not contain any language or type information
         success = [scanner scanUpToString:@"/" intoString:NULL];
         [scanner setScanLocation:[scanner scanLocation] + 1];
         if (!success) {
@@ -489,6 +490,7 @@ static void htmlStartElement(void *ctx, const char *name, const char **attribute
                                                     anchor:anchorName
                                                     docSet:docSet];
     } else {
+        // The apple_ref anchor format used in Apple's documentation
         success = [scanner scanUpToString:@"/" intoString:&language];
         [scanner setScanLocation:[scanner scanLocation] + 1];
         if (!success || [language isEqualToString:@"doc"]) {
