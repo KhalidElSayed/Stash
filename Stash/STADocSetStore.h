@@ -32,7 +32,9 @@
 
 - (void)docSetStoreDidUpdateDocSets:(STADocSetStore *)docSetStore;
 - (void)docSetStoreWillBeginIndexing:(STADocSetStore *)docSetStore;
+- (void)docSetStore:(STADocSetStore *)docSetStore willBeginIndexingDocSet:(STADocSet *)docSet;
 - (void)docSetStore:(STADocSetStore *)docSetStore didReachIndexingProgress:(double)progress forDocSet:(STADocSet *)docSet;
+- (void)docSetStore:(STADocSetStore *)docSetStore didFinishIndexingDocSet:(STADocSet *)docSet;
 - (void)docSetStoreDidFinishIndexing:(STADocSetStore *)docSetStore;
 
 @end

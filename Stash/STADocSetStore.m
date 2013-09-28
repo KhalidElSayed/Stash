@@ -368,12 +368,18 @@ static void htmlStartElement(void *ctx, const char *name, const char **attribute
 }
 
 - (void)indexDocSet:(STADocSet *)docSet {
+    if ([self.delegate respondsToSelector:@selector(docSetStore:willBeginIndexingDocSet:)]) {
+        dispatch_async(self.delegateQueue, ^{
+            [self.delegate docSetStore:self willBeginIndexingDocSet:docSet];
+        });
+    }
+
 #ifdef DEBUG
     NSLog(@"Started indexing %@", docSet);
     NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
 #endif
 
-    __block NSUInteger index = 0;
+    __block int32_t index = 0;
     NSMutableArray *htmlURLs = [NSMutableArray array];
     NSMutableArray *symbols = [NSMutableArray array];
     NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtURL:docSet.URL
@@ -400,6 +406,9 @@ static void htmlStartElement(void *ctx, const char *name, const char **attribute
     NSUInteger processorCount = [[NSProcessInfo processInfo] processorCount];
     dispatch_semaphore_t jobSemaphore = dispatch_semaphore_create(processorCount * 2);
 
+    BOOL reportProgress = [self.delegate respondsToSelector:@selector(docSetStore:didReachIndexingProgress:forDocSet:)];
+    NSUInteger totalURLs = [htmlURLs count];
+
     for (NSURL *url in htmlURLs) {
         @autoreleasepool {
             dispatch_semaphore_wait(jobSemaphore, DISPATCH_TIME_FOREVER);
@@ -413,15 +422,6 @@ static void htmlStartElement(void *ctx, const char *name, const char **attribute
                     htmlCtxtUseOptions(context, HTML_PARSE_RECOVER | HTML_PARSE_NONET);
                     htmlParseDocument(context);
                     htmlFreeParserCtxt(context);
-
-                    index++;
-                    double progress = ((double)index / (double)[htmlURLs count]) * 100.0;
-                    [docSet setIndexingProgress:progress];
-                    if ([self.delegate respondsToSelector:@selector(docSetStore:didReachIndexingProgress:forDocSet:)]) {
-                        dispatch_async(self.delegateQueue, ^{
-                            [self.delegate docSetStore:self didReachIndexingProgress:progress forDocSet:docSet];
-                        });
-                    }
 
                     for (NSString *anchorName in anchorNames) {
                         @autoreleasepool {
@@ -438,6 +438,15 @@ static void htmlStartElement(void *ctx, const char *name, const char **attribute
                         }
                     }
 
+                    if (reportProgress) {
+                        dispatch_async(self.delegateQueue, ^{
+                            int32_t newIndex = OSAtomicIncrement32(&index);
+                            double progress = ((double)newIndex / (double)totalURLs) * 100.0;
+                            [docSet setIndexingProgress:progress];
+                            [self.delegate docSetStore:self didReachIndexingProgress:progress forDocSet:docSet];
+                        });
+                    }
+
                     dispatch_semaphore_signal(jobSemaphore);
                 }
             });
@@ -452,6 +461,12 @@ static void htmlStartElement(void *ctx, const char *name, const char **attribute
     NSTimeInterval end = [NSDate timeIntervalSinceReferenceDate];
     NSLog(@"Indexing took: %.2f seconds", end - start);
 #endif
+
+    if ([self.delegate respondsToSelector:@selector(docSetStore:didFinishIndexingDocSet:)]) {
+        dispatch_async(self.delegateQueue, ^{
+            [self.delegate docSetStore:self didFinishIndexingDocSet:docSet];
+        });
+    }
 }
 
 - (STASymbol *)symbolForAnchorName:(NSString *)anchorName URL:(NSURL *)url docSet:(STADocSet *)docSet {

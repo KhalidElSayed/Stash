@@ -249,6 +249,13 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
     }
 }
 
+- (void)docSetStore:(STADocSetStore *)docSetStore didFinishIndexingDocSet:(STADocSet *)docSet {
+    NSUInteger index = [_indexingDocSets indexOfObject:docSet];
+    if (index != NSNotFound) {
+        [self.indexingDocsetsView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:index] columnIndexes:[NSIndexSet indexSetWithIndex:1]];
+    }
+}
+
 - (void)docSetStoreDidFinishIndexing:(STADocSetStore *)docSetStore {
     [self updateWindow];
     [self search:self.searchField];
