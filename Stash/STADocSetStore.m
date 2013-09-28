@@ -302,12 +302,12 @@ static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCal
     }
 
     _eventStream = FSEventStreamCreate(kCFAllocatorDefault,
-                                      &EventStreamCallback,
-                                      &streamContext,
-                                      (__bridge CFArrayRef)folderPaths,
-                                      kFSEventStreamEventIdSinceNow,
-                                      1.0,
-                                      kFSEventStreamCreateFlagUseCFTypes);
+                                       &EventStreamCallback,
+                                       &streamContext,
+                                       (__bridge CFArrayRef)folderPaths,
+                                       kFSEventStreamEventIdSinceNow,
+                                       1.0,
+                                       kFSEventStreamCreateFlagUseCFTypes);
     FSEventStreamSetDispatchQueue(_eventStream, _scanQueue);
     FSEventStreamStart(_eventStream);
 }
