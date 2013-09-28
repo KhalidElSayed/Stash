@@ -384,7 +384,7 @@ static void htmlStartElement(void *ctx, const char *name, const char **attribute
     for (NSURL *url in enumerator) {
         NSString *type = nil;
         [url getResourceValue:&type forKey:NSURLTypeIdentifierKey error:nil];
-        if ([type isEqualToString:(NSString *)kUTTypeHTML]) {
+        if (UTTypeConformsTo((__bridge CFStringRef)type, kUTTypeHTML)) {
             [htmlURLs addObject:url];
         }
     }
