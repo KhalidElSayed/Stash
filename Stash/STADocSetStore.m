@@ -406,66 +406,7 @@ static void htmlStartElement(void *ctx, const char *name, const char **attribute
             }
 
             for (NSString *anchorName in anchorNames) {
-                NSScanner *scanner = [NSScanner scannerWithString:anchorName];
-                NSString *apiName;
-                NSString *language;
-                NSString *symbolType;
-                NSString *symbolName;
-
-                BOOL success = [scanner scanString:@"//" intoString:NULL];
-                if (!success) {
-                    continue;
-                }
-
-                success = [scanner scanUpToString:@"/" intoString:&apiName];
-                [scanner setScanLocation:[scanner scanLocation] + 1];
-                if (!success) {
-                    continue;
-                }
-
-                STASymbol *symbol = nil;
-                if ([apiName isEqualToString:@"api"]) {
-                    success = [scanner scanUpToString:@"/" intoString:NULL];
-                    [scanner setScanLocation:[scanner scanLocation] + 1];
-                    if (!success) {
-                        continue;
-                    }
-
-                    [scanner scanUpToString:@"/" intoString:&symbolName];
-
-                    symbol = [[STASymbol alloc] initWithLanguageString:nil
-                                                      symbolTypeString:nil
-                                                            symbolName:symbolName
-                                                                   URL:url
-                                                                anchor:anchorName
-                                                                docSet:docSet];
-                } else {
-                    success = [scanner scanUpToString:@"/" intoString:&language];
-                    [scanner setScanLocation:[scanner scanLocation] + 1];
-                    if (!success || [language isEqualToString:@"doc"]) {
-                        continue;
-                    }
-
-                    success = [scanner scanUpToString:@"/" intoString:&symbolType];
-                    [scanner setScanLocation:[scanner scanLocation] + 1];
-                    if (!success) {
-                        continue;
-                    }
-
-                    [scanner scanUpToString:@"/" intoString:&symbolName];
-                    if ([scanner scanLocation] < [anchorName length] - 1) {
-                        [scanner setScanLocation:[scanner scanLocation] + 1];
-                        [scanner scanUpToString:@"/" intoString:&symbolName];
-                    }
-
-                    symbol = [[STASymbol alloc] initWithLanguageString:language
-                                                      symbolTypeString:symbolType
-                                                            symbolName:symbolName
-                                                                   URL:url
-                                                                anchor:anchorName
-                                                                docSet:docSet];
-                }
-
+                STASymbol *symbol = [self symbolForAnchorName:anchorName URL:url docSet:docSet];
                 if (!symbol)
                     continue;
 
@@ -483,6 +424,70 @@ static void htmlStartElement(void *ctx, const char *name, const char **attribute
     NSTimeInterval end = [NSDate timeIntervalSinceReferenceDate];
     NSLog(@"Indexing took: %.2f seconds", end - start);
 #endif
+}
+
+- (STASymbol *)symbolForAnchorName:(NSString *)anchorName URL:(NSURL *)url docSet:(STADocSet *)docSet {
+    NSScanner *scanner = [NSScanner scannerWithString:anchorName];
+    NSString *apiName;
+    NSString *language;
+    NSString *symbolType;
+    NSString *symbolName;
+
+    BOOL success = [scanner scanString:@"//" intoString:NULL];
+    if (!success) {
+        return nil;
+    }
+
+    success = [scanner scanUpToString:@"/" intoString:&apiName];
+    [scanner setScanLocation:[scanner scanLocation] + 1];
+    if (!success) {
+        return nil;
+    }
+
+    STASymbol *symbol = nil;
+    if ([apiName isEqualToString:@"api"]) {
+        success = [scanner scanUpToString:@"/" intoString:NULL];
+        [scanner setScanLocation:[scanner scanLocation] + 1];
+        if (!success) {
+            return nil;
+        }
+
+        [scanner scanUpToString:@"/" intoString:&symbolName];
+
+        symbol = [[STASymbol alloc] initWithLanguageString:nil
+                                          symbolTypeString:nil
+                                                symbolName:symbolName
+                                                       URL:url
+                                                    anchor:anchorName
+                                                    docSet:docSet];
+    } else {
+        success = [scanner scanUpToString:@"/" intoString:&language];
+        [scanner setScanLocation:[scanner scanLocation] + 1];
+        if (!success || [language isEqualToString:@"doc"]) {
+            return nil;
+        }
+
+        success = [scanner scanUpToString:@"/" intoString:&symbolType];
+        [scanner setScanLocation:[scanner scanLocation] + 1];
+        if (!success) {
+            return nil;
+        }
+
+        [scanner scanUpToString:@"/" intoString:&symbolName];
+        if ([scanner scanLocation] < [anchorName length] - 1) {
+            [scanner setScanLocation:[scanner scanLocation] + 1];
+            [scanner scanUpToString:@"/" intoString:&symbolName];
+        }
+
+        symbol = [[STASymbol alloc] initWithLanguageString:language
+                                          symbolTypeString:symbolType
+                                                symbolName:symbolName
+                                                       URL:url
+                                                    anchor:anchorName
+                                                    docSet:docSet];
+    }
+
+    return symbol;
 }
 
 @end
