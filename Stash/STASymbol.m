@@ -204,6 +204,14 @@ NSUInteger STASymbolTypeOrder(STASymbolType type)
     }
 }
 
+/**
+ * Returns the STALanguage associated with the given string.
+ *
+ * The string may be in the format used by apple_ref anchor tags or the long form used by a doc set index
+ * language table.
+ *
+ * @return The associated STALanguage or STALanguageUnknown is there is no associated language.
+ */
 STALanguage STALanguageFromNSString(NSString *languageString)
 {
     static NSDictionary *languageStrings = nil;
@@ -211,17 +219,26 @@ STALanguage STALanguageFromNSString(NSString *languageString)
     dispatch_once(&onceToken, ^
     {
         languageStrings = (@{
-                           @"c"          : @(STALanguageC),
-                           @"occ"        : @(STALanguageObjectiveC),
-                           @"cpp"        : @(STALanguageCPlusPlus),
-                           @"javascript" : @(STALanguageJavascript)
+                           @"c"           : @(STALanguageC),
+                           @"occ"         : @(STALanguageObjectiveC),
+                           @"objective-c" : @(STALanguageObjectiveC),
+                           @"c++"         : @(STALanguageCPlusPlus),
+                           @"cpp"         : @(STALanguageCPlusPlus),
+                           @"javascript"  : @(STALanguageJavascript),
                            });
     });
     
-    NSNumber *language = languageStrings[languageString];
+    NSNumber *language = languageStrings[[languageString lowercaseString]];
     return (language == nil ? STALanguageUnknown :  (STALanguage)[language intValue]);
 }
 
+/**
+ * Returns the STASymbolType associated with the given string.
+ *
+ * The string may be in the format used by apple_ref anchor tags or by a doc set index token type table.
+ *
+ * @return The associated STASymbolType or STASymbolTypeUnknown is there is no associated type.
+ */
 STASymbolType STASymbolTypeFromNSString(NSString *symbolTypeString)
 {
     static NSDictionary *symbolTypeStrings = nil;
@@ -249,6 +266,6 @@ STASymbolType STASymbolTypeFromNSString(NSString *symbolTypeString)
                              });
     });
     
-    NSNumber *symbolType = symbolTypeStrings[symbolTypeString];
+    NSNumber *symbolType = symbolTypeStrings[[symbolTypeString lowercaseString]];
     return symbolType == nil ? STASymbolTypeUnknown : (STASymbolType)[symbolType intValue];
 }
