@@ -23,38 +23,56 @@ static NSString * const STAAnchorKey = @"anchor";
     NSString *_anchor;
 }
 
-- (instancetype)initWithLanguageString:(NSString *)language symbolTypeString:(NSString *)symbolType symbolName:(NSString *)symbolName URL:(NSURL *)fileURL anchor:(NSString *)anchor docSet:(STADocSet *)docSet {
+- (instancetype)initWithLanguage:(STALanguage)language symbolType:(STASymbolType)symbolType symbolName:(NSString *)symbolName relativePathToDocSet:(NSString *)relativePath anchor:(NSString *)anchor docSet:(STADocSet *)docSet {
     if (!(self = [super init]))
         return nil;
 
-    NSParameterAssert(fileURL != nil);
+    NSParameterAssert(symbolName != nil);
+    NSParameterAssert(relativePath != nil);
     NSParameterAssert(docSet != nil);
-    
-    [self setLanguage:STALanguageFromNSString(language)];
-    [self setSymbolType:STASymbolTypeFromNSString(symbolType)];
-    [self setSymbolName:symbolName];
-    [self setDocSet:docSet];
 
-    // Store as a relative path so bookmark data does not need to be stored for every symbol
-    NSString *basePath = [_docSet.URL path];
-    _relativePath = [[fileURL path] substringFromIndex:[basePath length] + 1];
-    _anchor = anchor;
+    _language = language;
+    _symbolType = symbolType;
+    _symbolName = [symbolName copy];
+    _relativePath = [relativePath copy];
+    _anchor = [anchor copy];
+    _docSet = docSet;
 
     return self;
 }
 
+- (instancetype)initWithLanguage:(STALanguage)language symbolType:(STASymbolType)symbolType symbolName:(NSString *)symbolName URL:(NSURL *)fileURL anchor:(NSString *)anchor docSet:(STADocSet *)docSet {
+    NSParameterAssert(fileURL != nil);
+
+    // Store as a relative path so bookmark data does not need to be stored for every symbol
+    NSString *basePath = [docSet.URL path];
+    NSString *relativePath = [[fileURL path] substringFromIndex:[basePath length] + 1];
+
+    return [self initWithLanguage:language
+                       symbolType:symbolType
+                       symbolName:symbolName
+             relativePathToDocSet:relativePath
+                           anchor:anchor
+                           docSet:docSet];
+
+}
+
+- (instancetype)initWithLanguageString:(NSString *)language symbolTypeString:(NSString *)symbolType symbolName:(NSString *)symbolName URL:(NSURL *)fileURL anchor:(NSString *)anchor docSet:(STADocSet *)docSet {
+    return [self initWithLanguage:STALanguageFromNSString(language)
+                       symbolType:STASymbolTypeFromNSString(symbolType)
+                       symbolName:symbolName
+                              URL:fileURL
+                           anchor:anchor
+                           docSet:docSet];
+}
+
 - (instancetype)initWithPropertyListRepresentation:(id)plist docSet:(STADocSet *)docSet {
-    if (!(self = [super init]))
-        return nil;
-
-    _language = [plist[STALanguageKey] intValue];
-    _symbolType = [plist[STATypeKey] intValue];
-    _symbolName = plist[STANameKey];
-    _relativePath = plist[STARelativePathKey];
-    _anchor = plist[STAAnchorKey];
-    _docSet = docSet;
-
-    return self;
+    return [self initWithLanguage:[plist[STALanguageKey] intValue]
+                       symbolType:[plist[STATypeKey] intValue]
+                       symbolName:plist[STANameKey]
+             relativePathToDocSet:plist[STARelativePathKey]
+                           anchor:plist[STAAnchorKey]
+                           docSet:docSet];
 }
 
 - (id)propertyListRepresentation {

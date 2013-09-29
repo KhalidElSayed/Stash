@@ -58,12 +58,26 @@ STASymbolType STASymbolTypeFromNSString(NSString *symbolTypeString);
 @property (nonatomic, readonly) NSURL *URL;
 @property (nonatomic,weak) STADocSet *docSet;
 
+- (instancetype)initWithLanguage:(STALanguage)language
+                      symbolType:(STASymbolType)symbolType
+                      symbolName:(NSString *)symbolName
+            relativePathToDocSet:(NSString *)relativePath
+                          anchor:(NSString *)anchor
+                          docSet:(STADocSet *)docSet;
+
+- (instancetype)initWithLanguage:(STALanguage)language
+                      symbolType:(STASymbolType)symbolType
+                      symbolName:(NSString *)symbolName
+                             URL:(NSURL *)fileURL
+                          anchor:(NSString *)anchor
+                          docSet:(STADocSet *)docSet;
+
 - (instancetype)initWithLanguageString:(NSString *)language
-                      symbolTypeString:(NSString *)symbolType
-                            symbolName:(NSString *)symbolName
-                                   URL:(NSURL *)fileURL
-                                anchor:(NSString *)anchor
-                                docSet:(STADocSet *)docSet;
+                symbolTypeString:(NSString *)symbolType
+                      symbolName:(NSString *)symbolName
+                             URL:(NSURL *)fileURL
+                          anchor:(NSString *)anchor
+                          docSet:(STADocSet *)docSet;
 
 - (instancetype)initWithPropertyListRepresentation:(id)plist docSet:(STADocSet *)docSet;
 - (id)propertyListRepresentation;
@@ -71,4 +85,5 @@ STASymbolType STASymbolTypeFromNSString(NSString *symbolTypeString);
 - (BOOL)matches:(NSString *)searchString method:(STASearchMethod)method;
 
 - (NSComparisonResult)compare:(id)other;
+
 @end
