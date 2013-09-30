@@ -52,11 +52,11 @@ STASymbolType STASymbolTypeFromNSString(NSString *symbolTypeString);
 
 @interface STASymbol : NSObject
 
-@property (nonatomic,assign) STALanguage language;
-@property (nonatomic,assign) STASymbolType symbolType;
-@property (nonatomic,copy) NSString *symbolName;
+@property (nonatomic, readonly) STALanguage language;
+@property (nonatomic, readonly) STASymbolType symbolType;
+@property (nonatomic, readonly) NSString *symbolName;
 @property (nonatomic, readonly) NSURL *URL;
-@property (nonatomic,weak) STADocSet *docSet;
+@property (nonatomic, readonly, weak) STADocSet *docSet;
 
 - (instancetype)initWithLanguage:(STALanguage)language
                       symbolType:(STASymbolType)symbolType
