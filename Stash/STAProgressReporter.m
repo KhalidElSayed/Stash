@@ -45,11 +45,11 @@
 }
 
 - (int32_t)completedUnits {
-    __block int32_t totalUnits;
+    __block int32_t completedUnits;
     dispatch_sync(_serialQueue, ^{
-        totalUnits = _totalUnits;
+        completedUnits = _completedUnits;
     });
-    return totalUnits;
+    return completedUnits;
 }
 
 - (void)setCompletedUnits:(int32_t)completedUnits {
