@@ -60,6 +60,8 @@
 		C9E4CD8A17F87DB5007F195E /* STAHTMLDocSetIndexer.m in Sources */ = {isa = PBXBuildFile; fileRef = C9E4CD8917F87DB5007F195E /* STAHTMLDocSetIndexer.m */; };
 		C9E4CD9017F8A9BB007F195E /* STAAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = C9E4CD8F17F8A9BB007F195E /* STAAdditions.m */; };
 		C9E4CD9317F8AF15007F195E /* STAProgressReporter.m in Sources */ = {isa = PBXBuildFile; fileRef = C9E4CD9217F8AF15007F195E /* STAProgressReporter.m */; };
+		C9EF559317F9D15D005178F5 /* STADatabaseDocSetIndexer.m in Sources */ = {isa = PBXBuildFile; fileRef = C9EF559217F9D15D005178F5 /* STADatabaseDocSetIndexer.m */; };
+		C9EF559517F9D166005178F5 /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9EF559417F9D166005178F5 /* libsqlite3.dylib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -147,6 +149,9 @@
 		C9E4CD8F17F8A9BB007F195E /* STAAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = STAAdditions.m; sourceTree = "<group>"; };
 		C9E4CD9117F8AF15007F195E /* STAProgressReporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = STAProgressReporter.h; sourceTree = "<group>"; };
 		C9E4CD9217F8AF15007F195E /* STAProgressReporter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = STAProgressReporter.m; sourceTree = "<group>"; };
+		C9EF559117F9D15D005178F5 /* STADatabaseDocSetIndexer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = STADatabaseDocSetIndexer.h; sourceTree = "<group>"; };
+		C9EF559217F9D15D005178F5 /* STADatabaseDocSetIndexer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = STADatabaseDocSetIndexer.m; sourceTree = "<group>"; };
+		C9EF559417F9D166005178F5 /* libsqlite3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.dylib; path = usr/lib/libsqlite3.dylib; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -154,6 +159,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C9EF559517F9D166005178F5 /* libsqlite3.dylib in Frameworks */,
 				1F09B02E157A067F0081DC63 /* libxml2.dylib in Frameworks */,
 				1F09B020157934F90081DC63 /* WebKit.framework in Frameworks */,
 				1F09AFEC15792B810081DC63 /* Cocoa.framework in Frameworks */,
@@ -195,6 +201,7 @@
 		1F09AFEA15792B810081DC63 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				C9EF559417F9D166005178F5 /* libsqlite3.dylib */,
 				1F09B02D157A067F0081DC63 /* libxml2.dylib */,
 				1F09AFEB15792B810081DC63 /* Cocoa.framework */,
 				1F09B00915792B810081DC63 /* SenTestingKit.framework */,
@@ -223,6 +230,8 @@
 				C9E4CD8F17F8A9BB007F195E /* STAAdditions.m */,
 				1F09AFFD15792B810081DC63 /* STAAppDelegate.h */,
 				1F09AFFE15792B810081DC63 /* STAAppDelegate.m */,
+				C9EF559117F9D15D005178F5 /* STADatabaseDocSetIndexer.h */,
+				C9EF559217F9D15D005178F5 /* STADatabaseDocSetIndexer.m */,
 				1F09B02115795C7F0081DC63 /* STADocSet.h */,
 				1F09B02215795C7F0081DC63 /* STADocSet.m */,
 				C9E4CD8717F87D43007F195E /* STADocSetIndexer.h */,
@@ -461,6 +470,7 @@
 				1F09AFF815792B810081DC63 /* main.m in Sources */,
 				1F09AFFF15792B810081DC63 /* STAAppDelegate.m in Sources */,
 				C9E4CD8A17F87DB5007F195E /* STAHTMLDocSetIndexer.m in Sources */,
+				C9EF559317F9D15D005178F5 /* STADatabaseDocSetIndexer.m in Sources */,
 				1F09B02315795C7F0081DC63 /* STADocSet.m in Sources */,
 				1F09B031157A12E70081DC63 /* STASymbol.m in Sources */,
 				1F50A3A6157BA41C00CF6068 /* STASymbolTableViewCell.m in Sources */,

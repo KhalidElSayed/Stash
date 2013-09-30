@@ -8,6 +8,7 @@
 
 #import "STADocSetStore.h"
 #import "STADocSetInternal.h"
+#import "STADatabaseDocSetIndexer.h"
 #import "STAHTMLDocSetIndexer.h"
 #import "STAAdditions.h"
 
@@ -47,6 +48,7 @@ static NSString * const STAIndexExtension = @"stashidx";
     _docSets = @{};
 
     _indexers = @[
+        [STADatabaseDocSetIndexer new],
         [STAHTMLDocSetIndexer new]
     ];
 
