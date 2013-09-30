@@ -79,18 +79,10 @@ static NSString * const STAIndexExtension = @"stashidx";
 - (void)loadCachedDocSets {
     NSMutableDictionary *docSets = [NSMutableDictionary dictionary];
 
-    NSArray *urls = [[NSFileManager defaultManager] contentsOfDirectoryAtURL:_cacheURL
-                                                  includingPropertiesForKeys:@[]
-                                                                     options:0
-                                                                       error:nil];
-
     dispatch_group_t group = dispatch_group_create();
     dispatch_semaphore_t sem = dispatch_semaphore_create(1);
 
-    for (NSURL *url in urls) {
-        if (![url.pathExtension isEqualToString:STAIndexExtension])
-            continue;
-
+    for (NSURL *url in [self cachedDocSetURLs]) {
         NSData *data = [NSData dataWithContentsOfURL:url];
         dispatch_group_async(group, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
             id plist = [NSPropertyListSerialization propertyListWithData:data options:0 format:nil error:nil];
@@ -118,22 +110,24 @@ static NSString * const STAIndexExtension = @"stashidx";
  * Removes cached indexes for doc sets that no longer exist.
  */
 - (void)cleanCachedDocSets {
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSArray *urls = [fileManager contentsOfDirectoryAtURL:_cacheURL
-                               includingPropertiesForKeys:@[]
-                                                  options:0
-                                                    error:nil];
-
-    for (NSURL *url in urls) {
-        if (![[url pathExtension] isEqualToString:STAIndexExtension])
-            continue;
-
+    for (NSURL *url in [self cachedDocSetURLs]) {
         NSString *identifier = [[url lastPathComponent] stringByDeletingPathExtension];
 
         if (_docSets[identifier] == nil) {
-            [fileManager removeItemAtURL:url error:nil];
+            [[NSFileManager defaultManager] removeItemAtURL:url error:nil];
         }
     }
+}
+
+- (NSArray *)cachedDocSetURLs {
+    NSArray *urls = [[NSFileManager defaultManager] contentsOfDirectoryAtURL:_cacheURL
+                                                  includingPropertiesForKeys:@[]
+                                                                     options:0
+                                                                       error:nil];
+
+    return [urls objectsAtIndexes:[urls indexesOfObjectsPassingTest:^BOOL(NSURL *url, NSUInteger idx, BOOL *stop) {
+        return [url.pathExtension isEqualToString:STAIndexExtension];
+    }]];
 }
 
 - (void)loadSymbolsForDocSet:(STADocSet *)docSet {
