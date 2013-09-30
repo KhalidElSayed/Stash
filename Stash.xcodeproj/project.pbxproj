@@ -57,6 +57,9 @@
 		1FBF3DEF157E3F22007B8D97 /* MacOS.png in Resources */ = {isa = PBXBuildFile; fileRef = 1FBF3DEB157E3F22007B8D97 /* MacOS.png */; };
 		1FBF3DF0157E3F22007B8D97 /* MacOS@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1FBF3DEC157E3F22007B8D97 /* MacOS@2x.png */; };
 		1FE7C61516EE2E26008B7F86 /* STADocSetStore.m in Sources */ = {isa = PBXBuildFile; fileRef = 1FE7C61416EE2E26008B7F86 /* STADocSetStore.m */; };
+		C9E4CD8A17F87DB5007F195E /* STAHTMLDocSetIndexer.m in Sources */ = {isa = PBXBuildFile; fileRef = C9E4CD8917F87DB5007F195E /* STAHTMLDocSetIndexer.m */; };
+		C9E4CD9017F8A9BB007F195E /* STAAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = C9E4CD8F17F8A9BB007F195E /* STAAdditions.m */; };
+		C9E4CD9317F8AF15007F195E /* STAProgressReporter.m in Sources */ = {isa = PBXBuildFile; fileRef = C9E4CD9217F8AF15007F195E /* STAProgressReporter.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -137,6 +140,13 @@
 		1FE7C61316EE2E26008B7F86 /* STADocSetStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = STADocSetStore.h; sourceTree = "<group>"; };
 		1FE7C61416EE2E26008B7F86 /* STADocSetStore.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = STADocSetStore.m; sourceTree = "<group>"; };
 		C9966FC917F37F30008EA391 /* STADocSetInternal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = STADocSetInternal.h; sourceTree = "<group>"; };
+		C9E4CD8717F87D43007F195E /* STADocSetIndexer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = STADocSetIndexer.h; sourceTree = "<group>"; };
+		C9E4CD8817F87DB5007F195E /* STAHTMLDocSetIndexer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = STAHTMLDocSetIndexer.h; sourceTree = "<group>"; };
+		C9E4CD8917F87DB5007F195E /* STAHTMLDocSetIndexer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = STAHTMLDocSetIndexer.m; sourceTree = "<group>"; };
+		C9E4CD8E17F8A9BB007F195E /* STAAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = STAAdditions.h; sourceTree = "<group>"; };
+		C9E4CD8F17F8A9BB007F195E /* STAAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = STAAdditions.m; sourceTree = "<group>"; };
+		C9E4CD9117F8AF15007F195E /* STAProgressReporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = STAProgressReporter.h; sourceTree = "<group>"; };
+		C9E4CD9217F8AF15007F195E /* STAProgressReporter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = STAProgressReporter.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -209,18 +219,25 @@
 			children = (
 				1F50A3B0157BAAA400CF6068 /* Images */,
 				1F09B00015792B810081DC63 /* MainMenu.xib */,
+				C9E4CD8E17F8A9BB007F195E /* STAAdditions.h */,
+				C9E4CD8F17F8A9BB007F195E /* STAAdditions.m */,
 				1F09AFFD15792B810081DC63 /* STAAppDelegate.h */,
 				1F09AFFE15792B810081DC63 /* STAAppDelegate.m */,
 				1F09B02115795C7F0081DC63 /* STADocSet.h */,
 				1F09B02215795C7F0081DC63 /* STADocSet.m */,
+				C9E4CD8717F87D43007F195E /* STADocSetIndexer.h */,
 				C9966FC917F37F30008EA391 /* STADocSetInternal.h */,
 				1FE7C61316EE2E26008B7F86 /* STADocSetStore.h */,
 				1FE7C61416EE2E26008B7F86 /* STADocSetStore.m */,
+				C9E4CD8817F87DB5007F195E /* STAHTMLDocSetIndexer.h */,
+				C9E4CD8917F87DB5007F195E /* STAHTMLDocSetIndexer.m */,
 				1F91C26516E3858C00AE40C5 /* STAMainWindowController.h */,
 				1F91C26616E3858C00AE40C5 /* STAMainWindowController.m */,
 				1FBF3DE4157CAFEC007B8D97 /* STAPreferencesController.h */,
 				1FBF3DE5157CAFEC007B8D97 /* STAPreferencesController.m */,
 				1FBF3DE1157CAFD4007B8D97 /* STAPreferencesController.xib */,
+				C9E4CD9117F8AF15007F195E /* STAProgressReporter.h */,
+				C9E4CD9217F8AF15007F195E /* STAProgressReporter.m */,
 				1F879AD81658F3CC004ABD2C /* Stash.entitlements */,
 				1F09B02F157A12E60081DC63 /* STASymbol.h */,
 				1F09B030157A12E70081DC63 /* STASymbol.m */,
@@ -443,9 +460,12 @@
 			files = (
 				1F09AFF815792B810081DC63 /* main.m in Sources */,
 				1F09AFFF15792B810081DC63 /* STAAppDelegate.m in Sources */,
+				C9E4CD8A17F87DB5007F195E /* STAHTMLDocSetIndexer.m in Sources */,
 				1F09B02315795C7F0081DC63 /* STADocSet.m in Sources */,
 				1F09B031157A12E70081DC63 /* STASymbol.m in Sources */,
 				1F50A3A6157BA41C00CF6068 /* STASymbolTableViewCell.m in Sources */,
+				C9E4CD9317F8AF15007F195E /* STAProgressReporter.m in Sources */,
+				C9E4CD9017F8A9BB007F195E /* STAAdditions.m in Sources */,
 				1FBF3DE6157CAFEC007B8D97 /* STAPreferencesController.m in Sources */,
 				1F91C26716E3858C00AE40C5 /* STAMainWindowController.m in Sources */,
 				1FE7C61516EE2E26008B7F86 /* STADocSetStore.m in Sources */,

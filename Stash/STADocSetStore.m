@@ -8,15 +8,10 @@
 
 #import "STADocSetStore.h"
 #import "STADocSetInternal.h"
-#import <libxml/HTMLparser.h>
+#import "STAHTMLDocSetIndexer.h"
+#import "STAAdditions.h"
 
 static NSString * const STAIndexExtension = @"stashidx";
-
-static const char *sta_queue_label(const char *label) {
-    NSBundle *bundle = [NSBundle mainBundle];
-    NSString *fullLabel = [[bundle bundleIdentifier] stringByAppendingFormat:@".%s", label];
-    return [fullLabel UTF8String];
-}
 
 @implementation STADocSetStore {
     NSURL *_cacheURL;
@@ -26,9 +21,13 @@ static const char *sta_queue_label(const char *label) {
     FSEventStreamRef _eventStream;
     dispatch_queue_t _scanQueue;
     dispatch_queue_t _indexQueue;
-    dispatch_queue_t _indexIOQueue;
     dispatch_source_t _timerSource;
     NSUInteger _indexingCount;
+
+    /**
+     * The list of doc set indexers in order of preference.
+     */
+    NSArray *_indexers;
 }
 
 - (NSArray *)docSets {
@@ -36,8 +35,7 @@ static const char *sta_queue_label(const char *label) {
 }
 
 - (instancetype)initWithCacheDirectory:(NSURL *)cacheURL delegate:(id<STADocSetStoreDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
-    if (!(self = [super init]))
-        return nil;
+    STASuperInit();
 
     NSParameterAssert(cacheURL != nil);
 
@@ -45,9 +43,12 @@ static const char *sta_queue_label(const char *label) {
     _delegate = delegate;
     _delegateQueue = queue ?: dispatch_get_main_queue();
     _scanQueue = dispatch_queue_create(sta_queue_label("docset-scanning"), DISPATCH_QUEUE_SERIAL);
-    _indexQueue = dispatch_queue_create(sta_queue_label("docset-indexing"), DISPATCH_QUEUE_CONCURRENT);
-    _indexIOQueue = dispatch_queue_create(sta_queue_label("docset-indexingio"), DISPATCH_QUEUE_SERIAL);
+    _indexQueue = dispatch_queue_create(sta_queue_label("docset-indexing"), DISPATCH_QUEUE_SERIAL);
     _docSets = @{};
+
+    _indexers = @[
+        [STAHTMLDocSetIndexer new]
+    ];
 
     _locations = [NSMutableSet set];
     [self addStandardLocations];
@@ -147,7 +148,7 @@ static const char *sta_queue_label(const char *label) {
         }
     }
 
-    dispatch_async(_indexIOQueue, ^{
+    dispatch_async(_indexQueue, ^{
         [self indexDocSet:docSet];
 
         NSError *error = nil;
@@ -345,28 +346,6 @@ static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCal
 
 #pragma mark - Indexing
 
-/**
- * libxml2 callback used to extract anchor names from HTML documents.
- *
- * The attributes parameter is an array of name/value pairs terminated by a name
- * with a value of NULL.
- */
-static void htmlStartElement(void *ctx, const char *name, const char **attributes) {
-    if (!attributes || strcmp(name, "a") != 0)
-        return;
-
-    for (const char **attr = attributes; *attr != NULL; attr += 2) {
-        if (strcmp(*attr, "name") == 0) {
-            const char **value = attr + 1;
-            if (value) {
-                NSMutableArray *array = (__bridge NSMutableArray *)ctx;
-                [array addObject:@(*value)];
-            }
-            break;
-        }
-    }
-}
-
 - (void)indexDocSet:(STADocSet *)docSet {
     if ([self.delegate respondsToSelector:@selector(docSetStore:willBeginIndexingDocSet:)]) {
         dispatch_async(self.delegateQueue, ^{
@@ -379,83 +358,21 @@ static void htmlStartElement(void *ctx, const char *name, const char **attribute
     NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
 #endif
 
-    __block int32_t index = 0;
-    NSMutableArray *htmlURLs = [NSMutableArray array];
-    NSMutableArray *symbols = [NSMutableArray array];
-    NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtURL:docSet.URL
-                                                             includingPropertiesForKeys:@[NSURLTypeIdentifierKey]
-                                                                                options:0
-                                                                           errorHandler:^BOOL (NSURL *url, NSError *err) { return YES; }];
-
-    for (NSURL *url in enumerator) {
-        NSString *type = nil;
-        [url getResourceValue:&type forKey:NSURLTypeIdentifierKey error:nil];
-        if (UTTypeConformsTo((__bridge CFStringRef)type, kUTTypeHTML)) {
-            [htmlURLs addObject:url];
-        }
+    STAProgressReporter *progressReporter = nil;
+    if ([self.delegate respondsToSelector:@selector(docSetStore:didReachIndexingProgress:forDocSet:)]) {
+        progressReporter = [STAProgressReporter progressReporterWithQueue:self.delegateQueue handler:^(double progress) {
+            docSet.indexingProgress = progress * 100.0;
+            [self.delegate docSetStore:self didReachIndexingProgress:progress forDocSet:docSet];
+        }];
     }
 
-    __block htmlSAXHandler handler = {};
-    handler.startElement = (startElementSAXFunc)htmlStartElement;
-
-    dispatch_group_t group = dispatch_group_create();
-    dispatch_semaphore_t symbolsSemaphore = dispatch_semaphore_create(1);
-
-    // Limit the number of concurrent jobs so we do not read in more data than we
-    // can process and do not spawn many threads blocking on I/O.
-    NSUInteger processorCount = [[NSProcessInfo processInfo] processorCount];
-    dispatch_semaphore_t jobSemaphore = dispatch_semaphore_create(processorCount * 2);
-
-    BOOL reportProgress = [self.delegate respondsToSelector:@selector(docSetStore:didReachIndexingProgress:forDocSet:)];
-    NSUInteger totalURLs = [htmlURLs count];
-
-    for (NSURL *url in htmlURLs) {
-        @autoreleasepool {
-            dispatch_semaphore_wait(jobSemaphore, DISPATCH_TIME_FOREVER);
-
-            NSMutableArray *anchorNames = [NSMutableArray array];
-            NSData *data = [NSData dataWithContentsOfURL:url];
-
-            dispatch_group_async(group, _indexQueue, ^{
-                @autoreleasepool {
-                    htmlParserCtxtPtr context = htmlCreatePushParserCtxt(&handler, (__bridge void *)anchorNames, [data bytes], (int)[data length], NULL, XML_CHAR_ENCODING_UTF8);
-                    htmlCtxtUseOptions(context, HTML_PARSE_RECOVER | HTML_PARSE_NONET);
-                    htmlParseDocument(context);
-                    htmlFreeParserCtxt(context);
-
-                    for (NSString *anchorName in anchorNames) {
-                        @autoreleasepool {
-                            STASymbol *symbol = [self symbolForAnchorName:anchorName URL:url docSet:docSet];
-                            if (!symbol)
-                                continue;
-
-                            STASymbolType t = [symbol symbolType];
-                            if (t != STASymbolTypeBinding && t != STASymbolTypeTag) {
-                                dispatch_semaphore_wait(symbolsSemaphore, DISPATCH_TIME_FOREVER);
-                                [symbols addObject:symbol];
-                                dispatch_semaphore_signal(symbolsSemaphore);
-                            }
-                        }
-                    }
-
-                    if (reportProgress) {
-                        dispatch_async(self.delegateQueue, ^{
-                            int32_t newIndex = OSAtomicIncrement32(&index);
-                            double progress = ((double)newIndex / (double)totalURLs) * 100.0;
-                            [docSet setIndexingProgress:progress];
-                            [self.delegate docSetStore:self didReachIndexingProgress:progress forDocSet:docSet];
-                        });
-                    }
-
-                    dispatch_semaphore_signal(jobSemaphore);
-                }
-            });
+    for (id<STADocSetIndexer> indexer in _indexers) {
+        NSArray *symbols = [indexer indexDocSet:docSet progressReporter:progressReporter];
+        if (symbols) {
+            [docSet setSymbols:symbols];
+            break;
         }
     }
-
-    dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
-
-    [docSet setSymbols:symbols];
 
 #ifdef DEBUG
     NSTimeInterval end = [NSDate timeIntervalSinceReferenceDate];
@@ -467,72 +384,6 @@ static void htmlStartElement(void *ctx, const char *name, const char **attribute
             [self.delegate docSetStore:self didFinishIndexingDocSet:docSet];
         });
     }
-}
-
-- (STASymbol *)symbolForAnchorName:(NSString *)anchorName URL:(NSURL *)url docSet:(STADocSet *)docSet {
-    NSScanner *scanner = [NSScanner scannerWithString:anchorName];
-    NSString *apiName;
-    NSString *language;
-    NSString *symbolType;
-    NSString *symbolName;
-
-    BOOL success = [scanner scanString:@"//" intoString:NULL];
-    if (!success) {
-        return nil;
-    }
-
-    success = [scanner scanUpToString:@"/" intoString:&apiName];
-    [scanner setScanLocation:[scanner scanLocation] + 1];
-    if (!success) {
-        return nil;
-    }
-
-    STASymbol *symbol = nil;
-    if ([apiName isEqualToString:@"api"]) {
-        // The appledoc project's anchor format, which does not contain any language or type information
-        success = [scanner scanUpToString:@"/" intoString:NULL];
-        [scanner setScanLocation:[scanner scanLocation] + 1];
-        if (!success) {
-            return nil;
-        }
-
-        [scanner scanUpToString:@"/" intoString:&symbolName];
-
-        symbol = [[STASymbol alloc] initWithLanguageString:nil
-                                          symbolTypeString:nil
-                                                symbolName:symbolName
-                                                       URL:url
-                                                    anchor:anchorName
-                                                    docSet:docSet];
-    } else {
-        // The apple_ref anchor format used in Apple's documentation
-        success = [scanner scanUpToString:@"/" intoString:&language];
-        [scanner setScanLocation:[scanner scanLocation] + 1];
-        if (!success || [language isEqualToString:@"doc"]) {
-            return nil;
-        }
-
-        success = [scanner scanUpToString:@"/" intoString:&symbolType];
-        [scanner setScanLocation:[scanner scanLocation] + 1];
-        if (!success) {
-            return nil;
-        }
-
-        [scanner scanUpToString:@"/" intoString:&symbolName];
-        if ([scanner scanLocation] < [anchorName length] - 1) {
-            [scanner setScanLocation:[scanner scanLocation] + 1];
-            [scanner scanUpToString:@"/" intoString:&symbolName];
-        }
-
-        symbol = [[STASymbol alloc] initWithLanguageString:language
-                                          symbolTypeString:symbolType
-                                                symbolName:symbolName
-                                                       URL:url
-                                                    anchor:anchorName
-                                                    docSet:docSet];
-    }
-
-    return symbol;
 }
 
 @end
