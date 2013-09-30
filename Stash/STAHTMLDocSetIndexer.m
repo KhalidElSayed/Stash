@@ -42,9 +42,17 @@ static void htmlStartElement(void *ctx, const char *name, const char **attribute
 }
 
 - (NSArray *)indexDocSet:(STADocSet *)docSet progressReporter:(STAProgressReporter *)progressReporter {
+    NSURL *enumerationURL = docSet.URL;
+
+    // Limit the scan to the Documents folder if it exists
+    NSBundle *bundle = [NSBundle bundleWithURL:enumerationURL];
+    NSURL *documentsURL = [bundle URLForResource:@"Documents" withExtension:@""];
+    if (documentsURL)
+        enumerationURL = documentsURL;
+
     NSMutableArray *htmlURLs = [NSMutableArray array];
     NSMutableArray *symbols = [NSMutableArray array];
-    NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtURL:[docSet.URL filePathURL]
+    NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtURL:[enumerationURL filePathURL]
                                                              includingPropertiesForKeys:@[NSURLTypeIdentifierKey]
                                                                                 options:0
                                                                            errorHandler:^BOOL (NSURL *url, NSError *err) { return YES; }];
