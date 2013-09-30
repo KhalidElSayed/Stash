@@ -44,7 +44,7 @@ static void htmlStartElement(void *ctx, const char *name, const char **attribute
 - (NSArray *)indexDocSet:(STADocSet *)docSet progressReporter:(STAProgressReporter *)progressReporter {
     NSMutableArray *htmlURLs = [NSMutableArray array];
     NSMutableArray *symbols = [NSMutableArray array];
-    NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtURL:docSet.URL
+    NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtURL:[docSet.URL filePathURL]
                                                              includingPropertiesForKeys:@[NSURLTypeIdentifierKey]
                                                                                 options:0
                                                                            errorHandler:^BOOL (NSURL *url, NSError *err) { return YES; }];
@@ -58,6 +58,8 @@ static void htmlStartElement(void *ctx, const char *name, const char **attribute
     }
 
     progressReporter.totalUnits = [htmlURLs count];
+
+    NSString *basePath = [docSet.URL path];
 
     __block int32_t index = 0;
     __block htmlSAXHandler handler = {};
@@ -92,7 +94,8 @@ static void htmlStartElement(void *ctx, const char *name, const char **attribute
 
                     for (NSString *anchorName in anchorNames) {
                         @autoreleasepool {
-                            STASymbol *symbol = [self symbolForAnchorName:anchorName URL:url docSet:docSet];
+                            NSString *relativePath = [[url path] substringFromIndex:[basePath length] + 1];
+                            STASymbol *symbol = [self symbolForAnchorName:anchorName relativePathToDocSet:relativePath docSet:docSet];
                             if (!symbol)
                                 continue;
 
@@ -117,7 +120,7 @@ static void htmlStartElement(void *ctx, const char *name, const char **attribute
     return symbols;
 }
 
-- (STASymbol *)symbolForAnchorName:(NSString *)anchorName URL:(NSURL *)url docSet:(STADocSet *)docSet {
+- (STASymbol *)symbolForAnchorName:(NSString *)anchorName relativePathToDocSet:(NSString *)relativePath docSet:(STADocSet *)docSet {
     NSScanner *scanner = [NSScanner scannerWithString:anchorName];
     NSString *apiName;
     NSString *language;
@@ -146,12 +149,12 @@ static void htmlStartElement(void *ctx, const char *name, const char **attribute
 
         [scanner scanUpToString:@"/" intoString:&symbolName];
 
-        symbol = [[STASymbol alloc] initWithLanguageString:nil
-                                          symbolTypeString:nil
-                                                symbolName:symbolName
-                                                       URL:url
-                                                    anchor:anchorName
-                                                    docSet:docSet];
+        symbol = [[STASymbol alloc] initWithLanguage:STALanguageUnknown
+                                          symbolType:STASymbolTypeUnknown
+                                          symbolName:symbolName
+                                relativePathToDocSet:relativePath
+                                              anchor:anchorName
+                                              docSet:docSet];
     } else {
         // The apple_ref anchor format used in Apple's documentation
         success = [scanner scanUpToString:@"/" intoString:&language];
@@ -172,12 +175,12 @@ static void htmlStartElement(void *ctx, const char *name, const char **attribute
             [scanner scanUpToString:@"/" intoString:&symbolName];
         }
 
-        symbol = [[STASymbol alloc] initWithLanguageString:language
-                                          symbolTypeString:symbolType
-                                                symbolName:symbolName
-                                                       URL:url
-                                                    anchor:anchorName
-                                                    docSet:docSet];
+        symbol = [[STASymbol alloc] initWithLanguage:STALanguageFromNSString(language)
+                                          symbolType:STASymbolTypeFromNSString(symbolType)
+                                          symbolName:symbolName
+                                relativePathToDocSet:relativePath
+                                              anchor:anchorName
+                                              docSet:docSet];
     }
 
     return symbol;
