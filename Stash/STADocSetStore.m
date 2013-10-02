@@ -20,6 +20,15 @@ static NSString * const STAIndexExtension = @"stashidx";
 
     NSMutableSet *_locations;
     FSEventStreamRef _eventStream;
+
+    /**
+     * Paths to watch for file system changes.
+     *
+     * This may differ from _locations if any doc sets are included via
+     * symbolic links, as FSEvents does not watch for changes through symlinks.
+     */
+    NSSet *_pathsToWatch;
+
     dispatch_queue_t _scanQueue;
     dispatch_queue_t _indexQueue;
     dispatch_source_t _timerSource;
@@ -46,6 +55,7 @@ static NSString * const STAIndexExtension = @"stashidx";
     _scanQueue = dispatch_queue_create(sta_queue_label("docset-scanning"), DISPATCH_QUEUE_SERIAL);
     _indexQueue = dispatch_queue_create(sta_queue_label("docset-indexing"), DISPATCH_QUEUE_SERIAL);
     _docSets = @{};
+    _pathsToWatch = [NSSet set];
 
     _indexers = @[
         [STADatabaseDocSetIndexer new],
@@ -68,7 +78,6 @@ static NSString * const STAIndexExtension = @"stashidx";
         _loaded = YES;
 
         [self checkForUpdatedDocSets];
-        [self startMonitoring];
 
         if (completionHandler) {
             completionHandler(nil);
@@ -271,7 +280,28 @@ static NSComparator STADocSetComparator = ^(STADocSet *obj1, STADocSet *obj2) {
         });
     }
 
+    [self checkForUpdatedPathsToWatch];
     [self cleanCachedDocSets];
+}
+
+- (void)checkForUpdatedPathsToWatch {
+    NSMutableSet *pathsToWatch = [NSMutableSet set];
+    for (NSURL *url in _locations) {
+        [pathsToWatch addObject:[url path]];
+    }
+
+    // FSEvents does not monitor through symbolic links so add the containing path for each
+    // doc set as well to cover doc sets included via symlink.
+    for (STADocSet *docSet in self.docSets) {
+        NSString *path = [[docSet.URL path] stringByDeletingLastPathComponent];
+        [pathsToWatch addObject:path];
+    }
+
+    if ([pathsToWatch isEqual:_pathsToWatch] == NO) {
+        _pathsToWatch = pathsToWatch;
+        [self stopMonitoring];
+        [self startMonitoring];
+    }
 }
 
 static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCallBackInfo, size_t numEvents, void *eventPaths, const FSEventStreamEventFlags eventFlags[], const FSEventStreamEventId eventIds[]) {
@@ -295,15 +325,10 @@ static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCal
     FSEventStreamContext streamContext = {};
     streamContext.info = (__bridge void *)self;
 
-    NSMutableArray *folderPaths = [NSMutableArray array];
-    for (NSURL *url in _locations) {
-        [folderPaths addObject:[url path]];
-    }
-
     _eventStream = FSEventStreamCreate(kCFAllocatorDefault,
                                        &EventStreamCallback,
                                        &streamContext,
-                                       (__bridge CFArrayRef)folderPaths,
+                                       (__bridge CFArrayRef)[_pathsToWatch allObjects],
                                        kFSEventStreamEventIdSinceNow,
                                        1.0,
                                        kFSEventStreamCreateFlagUseCFTypes);
@@ -331,7 +356,7 @@ static void EventStreamCallback(ConstFSEventStreamRef streamRef, void *clientCal
                                                                        error:nil];
 
     for (NSURL *url in urls) {
-        STADocSet *docSet = [STADocSet docSetWithURL:url];
+        STADocSet *docSet = [STADocSet docSetWithURL:[url URLByResolvingSymlinksInPath]];
         if (docSet) {
             [docSets addObject:docSet];
         }
