@@ -58,50 +58,6 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
     _indexingDocSets = @[];
 
     [self updateWindow];
-    
-    [NSEvent addLocalMonitorForEventsMatchingMask:NSKeyDownMask handler:^ NSEvent * (NSEvent *e)
-     {
-         NSUInteger modifiers = [e modifierFlags] & NSDeviceIndependentModifierFlagsMask;
-         if (modifiers == NSCommandKeyMask &&
-             ([[e charactersIgnoringModifiers] isEqualToString:@"f"] ||
-              ([[e charactersIgnoringModifiers] isEqualToString:@"g"] && [self isFindUIShowing])))
-         {
-             return nil;
-         }
-         if (modifiers == (NSCommandKeyMask | NSShiftKeyMask) &&
-             [[e charactersIgnoringModifiers] isEqualToString:@"G"] &&
-             [self isFindUIShowing])
-         {
-             return nil;
-         }
-         return e;
-     }];
-    [NSEvent addLocalMonitorForEventsMatchingMask:NSKeyUpMask handler:^ NSEvent * (NSEvent *e)
-     {
-         NSUInteger modifiers = [e modifierFlags] & NSDeviceIndependentModifierFlagsMask;
-         if (modifiers == NSCommandKeyMask && [[e charactersIgnoringModifiers] isEqualToString:@"f"])
-         {
-             if (![self isFindUIShowing])
-             {
-                 [self showFindUI];
-             }
-             else
-             {
-                 [self hideSearchBar:self];
-             }
-             return nil;
-         }
-         if (modifiers == NSCommandKeyMask || modifiers == (NSCommandKeyMask | NSShiftKeyMask))
-         {
-             if (([[e charactersIgnoringModifiers] isEqualToString:@"g"] || [[e charactersIgnoringModifiers] isEqualToString:@"G"]) && [self isFindUIShowing])
-             {
-                 [self searchAgain:(modifiers & NSShiftKeyMask) == 0 ? YES : NO];
-                 return nil;
-             }
-             
-         }
-         return e;
-     }];
 }
 
 - (void)setEnabled:(BOOL)enabled {
@@ -149,6 +105,29 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
     }
 
     return _fieldEditor;
+}
+
+- (IBAction)performTextFinderAction:(id)sender {
+    switch ([sender tag]) {
+        case NSTextFinderActionShowFindInterface:
+            [self showFindUI];
+            break;
+
+        case NSTextFinderActionHideFindInterface:
+            [self hideSearchBar:sender];
+            break;
+
+        case NSTextFinderActionNextMatch:
+            [self searchAgain:YES];
+            break;
+
+        case NSTextFinderActionPreviousMatch:
+            [self searchAgain:NO];
+            break;
+
+        case NSTextFinderActionSetSearchString:
+            break;
+    }
 }
 
 - (void)showFindUI
