@@ -137,6 +137,11 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
     }
 }
 
+/**
+ * Returns a custom field editor that hides its find action support.
+ *
+ * This fixes find menu items using standard find action selectors from being disabled by the field editor.
+ */
 - (id)windowWillReturnFieldEditor:(NSWindow *)sender toObject:(id)client {
     if (_fieldEditor == nil) {
         _fieldEditor = [[STAMainWindowFieldEditor alloc] init];
