@@ -10,9 +10,6 @@
 #import "STAMainWindowFieldEditor.h"
 #import "STASymbolTableViewCell.h"
 
-NSImage *NSImageFromSTASymbolType(STASymbolType t);
-NSImage *NSImageFromSTAPlatform(STAPlatform p);
-
 @interface STAMainWindowController () <NSTableViewDelegate, NSTableViewDataSource>
 
 @property (copy) NSString *currentSearchString;
@@ -383,9 +380,7 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
     return view != [self searchColumn];
 }
 
-@end
-
-NSImage *NSImageFromSTAPlatform(STAPlatform p)
+static NSImage *NSImageFromSTAPlatform(STAPlatform p)
 {
     switch (p)
     {
@@ -398,7 +393,7 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p)
     }
 }
 
-NSImage *NSImageFromSTASymbolType(STASymbolType t)
+static NSImage *NSImageFromSTASymbolType(STASymbolType t)
 {
     switch (t)
     {
@@ -436,3 +431,5 @@ NSImage *NSImageFromSTASymbolType(STASymbolType t)
             return nil;
     }
 }
+
+@end
