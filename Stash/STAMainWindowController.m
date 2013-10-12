@@ -127,6 +127,25 @@
     }
 }
 
+- (void)cancelOperation:(id)sender {
+    [self hideSearchBar:self];
+}
+
+/**
+ * Hides the find bar when cancelOperation: is invoked within the find bar's search field.
+ *
+ * Normally the search field handles this and clear any input text, but the desired behavior is to cancel
+ * the search operation entirely.
+ */
+- (BOOL)control:(NSControl *)control textView:(NSTextView *)textView doCommandBySelector:(SEL)command {
+    if (command == @selector(cancelOperation:) && control == self.inPageSearchField) {
+        [self cancelOperation:control];
+        return YES;
+    }
+
+    return NO;
+}
+
 - (void)showFindUI
 {
     [[self window] makeFirstResponder:[self inPageSearchField]];
