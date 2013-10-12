@@ -11,7 +11,7 @@
 #import "STAPreferencesController.h"
 #import "STAMainWindowController.h"
 
-@interface STAAppDelegate : NSResponder <NSApplicationDelegate, NSTableViewDataSource, NSTableViewDelegate, STAPreferencesDelegate>
+@interface STAAppDelegate : NSResponder <NSApplicationDelegate, STAPreferencesDelegate>
 
 @property (strong) IBOutlet NSMenu *statusMenu;
 @property (weak) IBOutlet NSMenuItem *openStashMenuItem;
