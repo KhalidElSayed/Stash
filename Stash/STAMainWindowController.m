@@ -7,7 +7,7 @@
 //
 
 #import "STAMainWindowController.h"
-
+#import "STAMainWindowFieldEditor.h"
 #import "STASymbolTableViewCell.h"
 
 NSImage *NSImageFromSTASymbolType(STASymbolType t);
@@ -27,6 +27,7 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
 
 @implementation STAMainWindowController {
     NSArray *_indexingDocSets;
+    STAMainWindowFieldEditor *_fieldEditor;
 }
 
 - (void)windowDidLoad
@@ -134,6 +135,15 @@ NSImage *NSImageFromSTAPlatform(STAPlatform p);
         [self.docsetsNotFoundView setHidden:YES];
         [self.indexingDocsetsContainer setHidden:YES];
     }
+}
+
+- (id)windowWillReturnFieldEditor:(NSWindow *)sender toObject:(id)client {
+    if (_fieldEditor == nil) {
+        _fieldEditor = [[STAMainWindowFieldEditor alloc] init];
+        [_fieldEditor setFieldEditor:YES];
+    }
+
+    return _fieldEditor;
 }
 
 - (void)showFindUI
