@@ -210,7 +210,6 @@
 - (IBAction)search:(id)sender
 {
     NSString *searchString = [[[self searchField] stringValue] lowercaseString];
-    [self hideSearchBar:self];
     [self setCurrentSearchString:searchString];
 
     STASearchMethod method = [self.searchMethodSelector selectedRow] == 0 ? STASearchMethodPrefix : STASearchMethodContains;
@@ -285,6 +284,7 @@
     {
         STASymbol *symbol = [[self sortedResults] objectAtIndex:(NSUInteger) row];
         NSURLRequest *request = [NSURLRequest requestWithURL:[symbol URL]];
+        [self hideSearchBar:self];
         [[[self resultWebView] mainFrame] loadRequest:request];
     }
 }
