@@ -183,29 +183,30 @@
                                     <items>
                                         <menuItem title="Find…" tag="1" keyEquivalent="f" id="209">
                                             <connections>
-                                                <action selector="performFindPanelAction:" target="-1" id="241"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Find and Replace…" tag="12" keyEquivalent="f" id="534">
-                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                            <connections>
-                                                <action selector="performFindPanelAction:" target="-1" id="535"/>
+                                                <action selector="performTextFinderAction:" target="-1" id="Yge-6Z-fur"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem title="Find Next" tag="2" keyEquivalent="g" id="208">
                                             <connections>
-                                                <action selector="performFindPanelAction:" target="-1" id="487"/>
+                                                <action selector="performTextFinderAction:" target="-1" id="h9c-xL-Z2v"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem title="Find Previous" tag="3" keyEquivalent="G" id="213">
                                             <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
                                             <connections>
-                                                <action selector="performFindPanelAction:" target="-1" id="488"/>
+                                                <action selector="performTextFinderAction:" target="-1" id="f8E-a7-X2a"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="Msm-P5-rFf"/>
+                                        <menuItem title="Hide Find Bar" tag="11" keyEquivalent="F" id="Q4V-wR-ap8">
+                                            <connections>
+                                                <action selector="performTextFinderAction:" target="-1" id="oPr-Ai-AJq"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="Eik-7j-9vW"/>
                                         <menuItem title="Use Selection for Find" tag="7" keyEquivalent="e" id="221">
                                             <connections>
-                                                <action selector="performFindPanelAction:" target="-1" id="489"/>
+                                                <action selector="performTextFinderAction:" target="-1" id="mlt-CD-S0y"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem title="Jump to Selection" keyEquivalent="j" id="210">
