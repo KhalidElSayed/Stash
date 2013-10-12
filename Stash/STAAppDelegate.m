@@ -33,8 +33,9 @@
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
-    [[self mainWindowController] setPreferencesController:[self preferencesController]];
-    [[self mainWindowController] windowDidLoad];
+    self.mainWindowController = [[STAMainWindowController alloc] initWithWindowNibName:@"MainWindow"];
+    self.mainWindowController.preferencesController = self.preferencesController;
+    [self.mainWindowController window];
 
     [self userDefaultsDidChange:nil];
 
@@ -139,15 +140,15 @@
 
 - (IBAction)toggleStashWindow:(id)sender
 {
-    if ([[self window] isVisible])
+    if ([self.mainWindowController.window isVisible])
     {
-        [[self window] close];
+        [self.mainWindowController close];
         [[NSApplication sharedApplication] hide:self];
     }
     else
     {
-        [[self window] makeKeyAndOrderFront:self];
-        [[self window] setNextResponder:self];
+        [self.mainWindowController showWindow:self];
+        [self.mainWindowController.window setNextResponder:self];
         [NSApp activateIgnoringOtherApps:YES];
     }
 }
@@ -164,7 +165,7 @@
 {
     if ([[self preferencesController] appShouldHideWhenNotActive])
     {
-        [[self window] close];
+        [self.mainWindowController close];
     }
 }
 

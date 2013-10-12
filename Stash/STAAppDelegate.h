@@ -13,12 +13,11 @@
 
 @interface STAAppDelegate : NSResponder <NSApplicationDelegate, NSTableViewDataSource, NSTableViewDelegate, STAPreferencesDelegate>
 
-@property (assign) IBOutlet NSWindow *window;
 @property (strong) IBOutlet NSMenu *statusMenu;
 @property (weak) IBOutlet NSMenuItem *openStashMenuItem;
 @property (strong) NSStatusItem *statusItem;
 @property (strong) STAPreferencesController *preferencesController;
-@property (strong) IBOutlet STAMainWindowController *mainWindowController;
+@property (strong) STAMainWindowController *mainWindowController;
 
 - (IBAction)toggleStashWindow:(id)sender;
 - (IBAction)openPreferences:(id)sender;
