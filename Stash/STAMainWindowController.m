@@ -130,6 +130,7 @@
             break;
 
         case NSTextFinderActionSetSearchString:
+            [self setSearchStringFromSelection];
             break;
     }
 }
@@ -137,6 +138,21 @@
 - (IBAction)performFindForwardBackAction:(id)sender {
     BOOL forward = [sender selectedSegment] == 1;
     [self searchAgain:forward];
+}
+
+- (void)setSearchStringFromSelection {
+    NSString *selectedString = [self selectedStringForWebView:self.resultWebView];
+    if (selectedString != nil && [selectedString length] > 0) {
+        [self.inPageSearchField setStringValue:selectedString];
+    }
+}
+
+- (NSString *)selectedStringForWebView:(WebView *)webView {
+    id documentView = [[[webView selectedFrame] frameView] documentView];
+    if (documentView == nil || [documentView conformsToProtocol:@protocol(WebDocumentText)] == NO)
+        return nil;
+
+    return [documentView selectedString];
 }
 
 - (void)cancelOperation:(id)sender {
