@@ -25,6 +25,7 @@
 @implementation STAMainWindowController {
     NSArray *_indexingDocSets;
     STAMainWindowFieldEditor *_fieldEditor;
+    NSInteger _lastFindPasteboardChangeCount;
     IBOutlet NSSegmentedControl *_findBarForwardBackButtons;
 }
 
@@ -57,9 +58,19 @@
                            bundleInfo[@"CFBundleShortVersionString"]];
     [[self resultWebView] setApplicationNameForUserAgent:userAgent];
 
+    NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
+    [notificationCenter addObserver:self selector:@selector(applicationDidBecomeActive:) name:NSApplicationDidBecomeActiveNotification object:nil];
+
+    [self readSearchStringFromPasteboard];
+
     _indexingDocSets = @[];
 
     [self updateWindow];
+}
+
+- (void)dealloc {
+    NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
+    [notificationCenter removeObserver:self name:NSApplicationDidBecomeActiveNotification object:nil];
 }
 
 - (void)setEnabled:(BOOL)enabled {
@@ -144,6 +155,7 @@
     NSString *selectedString = [self selectedStringForWebView:self.resultWebView];
     if (selectedString != nil && [selectedString length] > 0) {
         [self.inPageSearchField setStringValue:selectedString];
+        [self writeSearchStringToPasteboard];
     }
 }
 
@@ -155,8 +167,33 @@
     return [documentView selectedString];
 }
 
+- (void)readSearchStringFromPasteboard {
+    NSPasteboard *pasteboard = [NSPasteboard pasteboardWithName:NSFindPboard];
+    NSInteger changeCount = [pasteboard changeCount];
+    if (_lastFindPasteboardChangeCount != changeCount) {
+        NSArray *strings = [pasteboard readObjectsForClasses:@[[NSString class]] options:nil];
+        if ([strings count] > 0) {
+            [self.inPageSearchField setStringValue:strings[0]];
+        }
+        _lastFindPasteboardChangeCount = [pasteboard changeCount];
+    }
+}
+
+- (void)writeSearchStringToPasteboard {
+    NSString *string = [self.inPageSearchField stringValue];
+    if ([string length] > 1) {
+        NSPasteboard *pasteboard = [NSPasteboard pasteboardWithName:NSFindPboard];
+        _lastFindPasteboardChangeCount = [pasteboard clearContents];
+        [pasteboard writeObjects:@[string]];
+    }
+}
+
 - (void)cancelOperation:(id)sender {
     [self hideSearchBar:self];
+}
+
+- (void)applicationDidBecomeActive:(NSNotification *)notification {
+    [self readSearchStringFromPasteboard];
 }
 
 /**
@@ -225,6 +262,8 @@
                           direction:YES
                       caseSensitive:NO
                                wrap:YES];
+
+    [self writeSearchStringToPasteboard];
 }
 
 - (void)searchAgain:(BOOL)forward
