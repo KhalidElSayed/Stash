@@ -1,0 +1,41 @@
+/* SDK doc sets */
+
+header, #adcHeader {
+    display: none !important;
+}
+
+article {
+    /* Use static positioning to naturally position the element once the headers are removed. */
+    position: static !important;
+
+    /*
+     * Show the entire contents. This fixes vertical scrolling incorrectly thinking it should sometimes
+     * scroll the surrounding element, and also causes horizontal scroll bars to appear when the contents
+     * extend beyond the edge of the frame.
+     */
+    overflow: visible !important;
+}
+
+/* Hide the floating Provide Feedback button */
+#xcode_leave_feedback {
+    display: none !important;
+}
+
+/*
+ * Appledoc
+ *
+ * Appledoc prevents a simple declaration of .hideInXcode as "display: none" because in some cases it
+ * interprets "hide" as "show, but with some changes". JavaScript can't be relied on to properly configure
+ * pages based on user agent either, as it only does this for some pages.
+ */
+
+ #top_header, #tocContainer {
+    display: none !important;
+ }
+
+div#contents, div#overview_contents {
+    /* Naturally position the contents element after removing headers and navigation. */
+    position: static !important;
+
+    border: none !important;
+}

@@ -44,11 +44,20 @@
     NSSize arrowImageSize = { 7, 7 };
     [[_findBarForwardBackButtons imageForSegment:0] setSize:arrowImageSize];
     [[_findBarForwardBackButtons imageForSegment:1] setSize:arrowImageSize];
-    
-    [[[self resultWebView] preferences] setJavaEnabled:NO];
-    [[[self resultWebView] preferences] setJavaScriptEnabled:YES];
-    [[[self resultWebView] preferences] setJavaScriptCanOpenWindowsAutomatically:NO];
-    [[[self resultWebView] preferences] setPlugInsEnabled:NO];
+
+    NSBundle *bundle = [NSBundle mainBundle];
+    NSURL *styleSheetURL = [bundle URLForResource:@"userstyle" withExtension:@"css"];
+
+    WebPreferences *webPreferences = [self.resultWebView preferences];
+    [webPreferences setJavaEnabled:NO];
+    [webPreferences setJavaScriptEnabled:NO];
+    [webPreferences setJavaScriptCanOpenWindowsAutomatically:NO];
+    [webPreferences setPlugInsEnabled:NO];
+
+    if (styleSheetURL != nil) {
+        [webPreferences setUserStyleSheetEnabled:YES];
+        [webPreferences setUserStyleSheetLocation:styleSheetURL];
+    }
 
     // Apple's docsets look for "Xcode/version" in the user-agent and hide
     // certain elements such as the ADC header.
@@ -437,10 +446,6 @@
 - (void)webView:(WebView *)sender didReceiveTitle:(NSString *)title forFrame:(WebFrame *)frame
 {
     [[self titleView] setStringValue:title];
-}
-
-- (void)webView:(WebView *)sender didFinishLoadForFrame:(WebFrame *)frame {
-    [sender stringByEvaluatingJavaScriptFromString:@"(function(){ var button = document.getElementById('xcode_leave_feedback'); if(button){ button.setAttribute('class', 'hidden'); }})();"];
 }
 
 - (BOOL)control:(NSControl *)control textShouldBeginEditing:(NSText *)fieldEditor

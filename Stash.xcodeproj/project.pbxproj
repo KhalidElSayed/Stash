@@ -59,6 +59,7 @@
 		1FE7C61516EE2E26008B7F86 /* STADocSetStore.m in Sources */ = {isa = PBXBuildFile; fileRef = 1FE7C61416EE2E26008B7F86 /* STADocSetStore.m */; };
 		C9DA1BF81809077C00CBE4B9 /* MainWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = C9DA1BF61809077C00CBE4B9 /* MainWindow.xib */; };
 		C9DA1C0D1809D5EF00CBE4B9 /* STAMainWindowFieldEditor.m in Sources */ = {isa = PBXBuildFile; fileRef = C9DA1C0C1809D5EF00CBE4B9 /* STAMainWindowFieldEditor.m */; };
+		C9DA1C10180AEF6600CBE4B9 /* userstyle.css in Resources */ = {isa = PBXBuildFile; fileRef = C9DA1C0F180AEF6600CBE4B9 /* userstyle.css */; };
 		C9E4CD8A17F87DB5007F195E /* STAHTMLDocSetIndexer.m in Sources */ = {isa = PBXBuildFile; fileRef = C9E4CD8917F87DB5007F195E /* STAHTMLDocSetIndexer.m */; };
 		C9E4CD9017F8A9BB007F195E /* STAAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = C9E4CD8F17F8A9BB007F195E /* STAAdditions.m */; };
 		C9E4CD9317F8AF15007F195E /* STAProgressReporter.m in Sources */ = {isa = PBXBuildFile; fileRef = C9E4CD9217F8AF15007F195E /* STAProgressReporter.m */; };
@@ -147,6 +148,7 @@
 		C9DA1BF71809077C00CBE4B9 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainWindow.xib; sourceTree = "<group>"; };
 		C9DA1C0B1809D5EF00CBE4B9 /* STAMainWindowFieldEditor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = STAMainWindowFieldEditor.h; sourceTree = "<group>"; };
 		C9DA1C0C1809D5EF00CBE4B9 /* STAMainWindowFieldEditor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = STAMainWindowFieldEditor.m; sourceTree = "<group>"; };
+		C9DA1C0F180AEF6600CBE4B9 /* userstyle.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; path = userstyle.css; sourceTree = "<group>"; };
 		C9E4CD8717F87D43007F195E /* STADocSetIndexer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = STADocSetIndexer.h; sourceTree = "<group>"; };
 		C9E4CD8817F87DB5007F195E /* STAHTMLDocSetIndexer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = STAHTMLDocSetIndexer.h; sourceTree = "<group>"; };
 		C9E4CD8917F87DB5007F195E /* STAHTMLDocSetIndexer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = STAHTMLDocSetIndexer.m; sourceTree = "<group>"; };
@@ -229,6 +231,7 @@
 		1F09AFF115792B810081DC63 /* Stash */ = {
 			isa = PBXGroup;
 			children = (
+				C9DA1C0E180AEF5C00CBE4B9 /* CSS */,
 				1F50A3B0157BAAA400CF6068 /* Images */,
 				1F09B00015792B810081DC63 /* MainMenu.xib */,
 				C9DA1BF61809077C00CBE4B9 /* MainWindow.xib */,
@@ -334,6 +337,14 @@
 			path = Images;
 			sourceTree = SOURCE_ROOT;
 		};
+		C9DA1C0E180AEF5C00CBE4B9 /* CSS */ = {
+			isa = PBXGroup;
+			children = (
+				C9DA1C0F180AEF6600CBE4B9 /* userstyle.css */,
+			);
+			name = CSS;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -436,6 +447,7 @@
 				1FBF3DE2157CAFD4007B8D97 /* STAPreferencesController.xib in Resources */,
 				C9DA1BF81809077C00CBE4B9 /* MainWindow.xib in Resources */,
 				1FBF3DED157E3F22007B8D97 /* iOS.png in Resources */,
+				C9DA1C10180AEF6600CBE4B9 /* userstyle.css in Resources */,
 				1FBF3DEE157E3F22007B8D97 /* iOS@2x.png in Resources */,
 				1FBF3DEF157E3F22007B8D97 /* MacOS.png in Resources */,
 				1FBF3DF0157E3F22007B8D97 /* MacOS@2x.png in Resources */,
