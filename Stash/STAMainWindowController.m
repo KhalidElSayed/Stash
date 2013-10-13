@@ -25,6 +25,7 @@
 @implementation STAMainWindowController {
     NSArray *_indexingDocSets;
     STAMainWindowFieldEditor *_fieldEditor;
+    IBOutlet NSSegmentedControl *_findBarForwardBackButtons;
 }
 
 - (void)windowDidLoad
@@ -38,6 +39,10 @@
     NSRect resultWebViewFrame = [[self resultWebView] frame];
     resultWebViewFrame.size.height = findBarRect.origin.y - resultWebViewFrame.origin.y;
     [[self resultWebView] setFrame:resultWebViewFrame];
+
+    NSSize arrowImageSize = { 7, 7 };
+    [[_findBarForwardBackButtons imageForSegment:0] setSize:arrowImageSize];
+    [[_findBarForwardBackButtons imageForSegment:1] setSize:arrowImageSize];
     
     [[[self resultWebView] preferences] setJavaEnabled:NO];
     [[[self resultWebView] preferences] setJavaScriptEnabled:YES];
@@ -90,6 +95,8 @@
     }
 }
 
+#pragma mark - Find Bar
+
 /**
  * Returns a custom field editor that hides its find action support.
  *
@@ -127,6 +134,11 @@
     }
 }
 
+- (IBAction)performFindForwardBackAction:(id)sender {
+    BOOL forward = [sender selectedSegment] == 1;
+    [self searchAgain:forward];
+}
+
 - (void)cancelOperation:(id)sender {
     [self hideSearchBar:self];
 }
@@ -134,7 +146,7 @@
 /**
  * Hides the find bar when cancelOperation: is invoked within the find bar's search field.
  *
- * Normally the search field handles this and clear any input text, but the desired behavior is to cancel
+ * Normally the search field handles this and clears any input text, but the desired behavior is to cancel
  * the search operation entirely.
  */
 - (BOOL)control:(NSControl *)control textView:(NSTextView *)textView doCommandBySelector:(SEL)command {

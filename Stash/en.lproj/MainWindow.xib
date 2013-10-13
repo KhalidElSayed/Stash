@@ -8,6 +8,7 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="STAMainWindowController">
             <connections>
+                <outlet property="_findBarForwardBackButtons" destination="wV8-gk-t1b" id="i3e-GQ-9gR"/>
                 <outlet property="docsetsNotFoundView" destination="1480" id="zQV-9Z-72U"/>
                 <outlet property="findBar" destination="1258" id="PQW-ek-QuA"/>
                 <outlet property="inPageSearchField" destination="1325" id="jhS-3v-sfA"/>
@@ -146,8 +147,8 @@
                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <searchField verticalHuggingPriority="750" id="1325">
-                                                <rect key="frame" x="477" y="3" width="208" height="19"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
+                                                <rect key="frame" x="9" y="3" width="626" height="19"/>
+                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                                 <searchFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" borderStyle="bezel" usesSingleLineMode="YES" bezelStyle="round" sendsWholeSearchString="YES" id="1326">
                                                     <font key="font" metaFont="smallSystem"/>
                                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -159,11 +160,11 @@
                                                 </connections>
                                             </searchField>
                                             <button verticalHuggingPriority="750" id="1344">
-                                                <rect key="frame" x="693" y="3" width="45" height="19"/>
+                                                <rect key="frame" x="694" y="3" width="42" height="19"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="roundRect" title="Done" bezelStyle="roundedRect" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="1345">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="cellTitle"/>
+                                                    <font key="font" metaFont="smallSystem"/>
                                                 </buttonCell>
                                                 <connections>
                                                     <action selector="hideSearchBar:" target="-2" id="Tra-Vn-E5U"/>
@@ -174,6 +175,20 @@
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                                 <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="axesIndependently" image="HorizontalSeparator" id="1366"/>
                                             </imageView>
+                                            <segmentedControl verticalHuggingPriority="750" id="wV8-gk-t1b">
+                                                <rect key="frame" x="642" y="3" width="45" height="20"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
+                                                <segmentedCell key="cell" alignment="left" style="roundRect" trackingMode="momentary" id="Udg-gu-7ta">
+                                                    <font key="font" metaFont="cellTitle"/>
+                                                    <segments>
+                                                        <segment image="NSLeftFacingTriangleTemplate" width="19"/>
+                                                        <segment image="NSRightFacingTriangleTemplate" width="19" tag="1"/>
+                                                    </segments>
+                                                </segmentedCell>
+                                                <connections>
+                                                    <action selector="performFindForwardBackAction:" target="-2" id="lEu-rU-tlh"/>
+                                                </connections>
+                                            </segmentedControl>
                                         </subviews>
                                     </customView>
                                     <webView id="777">
@@ -337,5 +352,7 @@ This may be because you do not have Xcode installed or have not downloaded any d
         <image name="HorizontalSeparator" width="1" height="1"/>
         <image name="NSGoLeftTemplate" width="9" height="9"/>
         <image name="NSGoRightTemplate" width="9" height="9"/>
+        <image name="NSLeftFacingTriangleTemplate" width="7" height="7"/>
+        <image name="NSRightFacingTriangleTemplate" width="7" height="7"/>
     </resources>
 </document>
