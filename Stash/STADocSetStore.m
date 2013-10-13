@@ -78,6 +78,7 @@ static NSString * const STAIndexExtension = @"stashidx";
         _loaded = YES;
 
         [self checkForUpdatedDocSets];
+        [self checkForUpdatedPathsToWatch];
 
         if (completionHandler) {
             completionHandler(nil);
