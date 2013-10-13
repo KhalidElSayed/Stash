@@ -18,7 +18,7 @@
 @property (weak) NSSearchField *selectedSearchField;
 
 - (void)showFindUI;
-- (void)searchAgain:(BOOL)backwards;
+- (void)searchAgain:(BOOL)forward;
 
 @end
 
@@ -199,10 +199,10 @@
                                wrap:YES];
 }
 
-- (void)searchAgain:(BOOL)backwards
+- (void)searchAgain:(BOOL)forward
 {
     [[self resultWebView] searchFor:[[self inPageSearchField] stringValue]
-                          direction:backwards
+                          direction:forward
                       caseSensitive:NO
                                wrap:YES];
 }
