@@ -473,12 +473,21 @@
 
 static NSImage *NSImageFromSTAPlatform(STAPlatform p)
 {
+    static NSImage *iosImage;
+    static NSImage *osxImage;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
+        iosImage = [workspace iconForFileType:@"com.apple.iphone"];
+        osxImage = [workspace iconForFile:[workspace absolutePathForAppBundleWithIdentifier:@"com.apple.finder"]];
+    });
+
     switch (p)
     {
         case STAPlatformIOS:
-            return [NSImage imageNamed:@"iOS"];
+            return iosImage;
         case STAPlatformMacOS:
-            return [NSImage imageNamed:@"MacOS"];
+            return osxImage;
         default:
             return nil;
     }
