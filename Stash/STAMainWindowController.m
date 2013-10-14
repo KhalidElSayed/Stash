@@ -473,11 +473,13 @@
 
 static NSImage *NSImageFromSTAPlatform(STAPlatform p)
 {
+    static NSImage *defaultImage;
     static NSImage *iosImage;
     static NSImage *osxImage;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
+        defaultImage = [workspace iconForFileType:@"docset"];
         iosImage = [workspace iconForFileType:@"com.apple.iphone"];
         osxImage = [workspace iconForFile:[workspace absolutePathForAppBundleWithIdentifier:@"com.apple.finder"]];
     });
@@ -489,7 +491,7 @@ static NSImage *NSImageFromSTAPlatform(STAPlatform p)
         case STAPlatformMacOS:
             return osxImage;
         default:
-            return nil;
+            return defaultImage;
     }
 }
 
