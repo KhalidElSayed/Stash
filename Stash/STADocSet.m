@@ -35,13 +35,15 @@ static NSString * const STASymbolsKey = @"symbols";
     if (![uti isEqualToString:STADocSetUTI])
         return nil;
 
-    NSBundle *bundle = [NSBundle bundleWithURL:url];
-    if (!bundle)
+    NSNumber *isBundle = nil;
+    [url getResourceValue:&isBundle forKey:NSURLIsPackageKey error:nil];
+    if ([isBundle boolValue] == NO)
         return nil;
 
-    NSDictionary *info = [bundle infoDictionary];
+    NSURL *infoDictionaryURL = [url URLByAppendingPathComponent:@"Contents/Info.plist"];
+    NSDictionary *info = [NSDictionary dictionaryWithContentsOfURL:infoDictionaryURL];
     _URL = [url fileReferenceURL];
-    _identifier = [bundle bundleIdentifier];
+    _identifier = info[@"CFBundleIdentifier"];
     _name = info[@"CFBundleName"];
     _docSetVersion = info[@"CFBundleVersion"];
     _platformVersion = info[@"DocSetPlatformVersion"];
