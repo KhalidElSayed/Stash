@@ -8,3 +8,4 @@
 * Significantly faster doc set indexing
 * Significantly faster load time for cached indexes
 * Cached indexes are now stored under ~/Library/Caches
+* Fixed the find command sometimes requiring multiple invocations
