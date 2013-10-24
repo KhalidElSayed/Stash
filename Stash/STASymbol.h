@@ -56,7 +56,7 @@ STASymbolType STASymbolTypeFromNSString(NSString *symbolTypeString);
 @property (nonatomic, readonly) STASymbolType symbolType;
 @property (nonatomic, readonly) NSString *symbolName;
 @property (nonatomic, readonly) NSURL *URL;
-@property (nonatomic, readonly, weak) STADocSet *docSet;
+@property (nonatomic, readonly, unsafe_unretained) STADocSet *docSet;
 
 - (instancetype)initWithLanguage:(STALanguage)language
                       symbolType:(STASymbolType)symbolType
