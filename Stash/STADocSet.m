@@ -41,6 +41,9 @@ static NSString * const STASymbolsKey = @"symbols";
         return nil;
 
     NSURL *infoDictionaryURL = [url URLByAppendingPathComponent:@"Contents/Info.plist"];
+    if (infoDictionaryURL == nil)
+        return nil;
+
     NSDictionary *info = [NSDictionary dictionaryWithContentsOfURL:infoDictionaryURL];
     _URL = [url fileReferenceURL];
     _identifier = info[@"CFBundleIdentifier"];
