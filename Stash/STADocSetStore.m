@@ -15,6 +15,7 @@
 static NSString * const STAIndexExtension = @"stashidx";
 
 @implementation STADocSetStore {
+    OSSpinLock _lock;
     NSURL *_cacheURL;
     NSDictionary *_docSets;
 
@@ -41,7 +42,10 @@ static NSString * const STAIndexExtension = @"stashidx";
 }
 
 - (NSArray *)docSets {
-    return [_docSets allValues];
+    OSSpinLockLock(&_lock);
+    NSArray *docSets = [_docSets allValues];
+    OSSpinLockUnlock(&_lock);
+    return docSets;
 }
 
 - (instancetype)initWithCacheDirectory:(NSURL *)cacheURL delegate:(id<STADocSetStoreDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
@@ -49,6 +53,7 @@ static NSString * const STAIndexExtension = @"stashidx";
 
     NSParameterAssert(cacheURL != nil);
 
+    _lock = OS_SPINLOCK_INIT;
     _cacheURL = cacheURL;
     _delegate = delegate;
     _delegateQueue = queue ?: dispatch_get_main_queue();
@@ -107,7 +112,9 @@ static NSString * const STAIndexExtension = @"stashidx";
 
     dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
 
+    OSSpinLockLock(&_lock);
     _docSets = docSets;
+    OSSpinLockUnlock(&_lock);
 
     if ([self.delegate respondsToSelector:@selector(docSetStoreDidUpdateDocSets:)]) {
         dispatch_async(self.delegateQueue, ^{
@@ -273,7 +280,9 @@ static NSComparator STADocSetComparator = ^(STADocSet *obj1, STADocSet *obj2) {
         [self loadSymbolsForDocSet:docSet];
     }
 
+    OSSpinLockLock(&_lock);
     _docSets = availableDocSets;
+    OSSpinLockUnlock(&_lock);
 
     if ([self.delegate respondsToSelector:@selector(docSetStoreDidUpdateDocSets:)]) {
         dispatch_async(self.delegateQueue, ^{
