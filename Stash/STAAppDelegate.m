@@ -11,6 +11,7 @@
 @implementation STAAppDelegate {
     STADocSetStore *_docSetStore;
     NSURL *_cacheURL;
+    BOOL _showingDockIcon;
 }
 
 - (id)init
@@ -22,9 +23,12 @@
         [self setPreferencesController:[[STAPreferencesController alloc] initWithNibNamed:@"STAPreferencesController" bundle:nil]];
         [[self preferencesController] setDelegate:self];
 
-        if (self.preferencesController.shouldShowDockIcon)
+        _showingDockIcon = self.preferencesController.shouldShowDockIcon;
+
+        if (_showingDockIcon)
         {
-            [[NSApplication sharedApplication] setActivationPolicy:NSApplicationActivationPolicyRegular];
+            ProcessSerialNumber psn = { 0, kCurrentProcess };
+            TransformProcessType(&psn, kProcessTransformToForegroundApplication);
         }
     }
 
@@ -117,9 +121,27 @@
 }
 
 - (void)userDefaultsDidChange:(NSNotification *)notification {
-    if (self.preferencesController.shouldShowDockIcon) {
-        if ([NSApp activationPolicy] != NSApplicationActivationPolicyRegular) {
-            [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+    if (self.preferencesController.shouldShowDockIcon != _showingDockIcon) {
+        _showingDockIcon = self.preferencesController.shouldShowDockIcon;
+
+        // Use TransformProcessType() rather than setActivationPolicy as setActivationPolicy
+        // does not support foreground to background transitions on pre-10.9 systems.
+        ProcessSerialNumber psn = { 0, kCurrentProcess };
+
+        if (_showingDockIcon) {
+            TransformProcessType(&psn, kProcessTransformToForegroundApplication);
+        } else {
+            TransformProcessType(&psn, kProcessTransformToUIElementApplication);
+
+            // On 10.9+ TransformProcessType() will activate the previous application
+            // automatically, but it needs to be done manually for 10.8. Otherwise our
+            // menu bar remains active.
+            [[NSApplication sharedApplication] hide:self];
+
+            // The event loop needs to iterate before we can activate again.
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+            });
         }
     }
 
